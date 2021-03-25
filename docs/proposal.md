@@ -8,9 +8,9 @@ abstract: "The project consists of two primary goals: 1) implement kernels that 
 
 # Validating Hash
 
-Distributed Ledger technologies are becoming more and more popular options for distributed and trusted databases. The most popular and simplest type of distributed ledgers is called block chain, which is used by the Bit Coin crypto Currency. All distributed ledgers require the ability to independently validate sequential entries in the ledger, usually via cryptographic hashes.
+Distributed Ledger technologies are becoming an increasingly popular options for distributed and trusted databases. The most popular and simplest type of distributed ledgers is called blockchain, which is used by the Bitcoin cryptocurrency. All distributed ledgers require the ability to independently validate sequential entries in the ledger, usually via cryptographic hashes.
 
-Sequential algorithms for independently validating distributed ledgers are limited to a time optimization of N. However, given a parrellel computer which is not resource constrained, a ledger can be independently validated in log(N) time via a parellel prefix scan.
+Sequential algorithms for independently validating distributed ledgers are limited to a time optimization of N. However, given a parallel system which is not resource constrained, a ledger can be independently validated in log(N) time via a parallel prefix scan.
 
 In this project, we will be making kernels to validate cryptographic hashes.
 
