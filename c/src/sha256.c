@@ -14,16 +14,12 @@ int SHA256_Init(SHA256_CTX *c) {
   return 1;
 }
 
-unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md) {
+void SHA256(const unsigned char *d, size_t n, unsigned char *md) {
   SHA256_CTX c;
-  static unsigned char m[SHA256_DIGEST_LENGTH];
-
-  if (md == NULL) md = m;
   SHA256_Init(&c);
   SHA256_Update(&c, d, n);
   SHA256_Final(md, &c);
   memset(&c, 0, sizeof(c));
-  return md;
 }
 
 #define DATA_ORDER_IS_BIG_ENDIAN
