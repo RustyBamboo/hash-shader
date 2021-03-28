@@ -1,13 +1,13 @@
-#include <stdio.h>
 #include "test.h"
+#include <stdio.h>
 
 // linking cuda too hard
 #include "sha256.cu"
 
 static int test_idx = 0;
-void test_sha256(unsigned char* d, int d_len, char* answer, int N);
+void test_sha256(unsigned char *d, int d_len, char *answer, int N);
 
-__global__ void kernel(unsigned char* d, int d_len, unsigned char* out) {
+__global__ void kernel(unsigned char *d, int d_len, unsigned char *out) {
   SHA256(d, d_len, out);
 }
 
@@ -16,14 +16,14 @@ int main() {
   return 0;
 }
 
-void test_sha256(unsigned char* d, int d_len, char* answer, int N) {
+void test_sha256(unsigned char *d, int d_len, char *answer, int N) {
   cudaDeviceSynchronize();
-  unsigned char* d_c;
-  cudaMallocManaged((void**)&d_c, d_len);
+  unsigned char *d_c;
+  cudaMallocManaged((void **)&d_c, d_len);
   cudaMemcpy(d_c, d, d_len, cudaMemcpyHostToDevice);
 
-  unsigned char* digest_c;
-  cudaMallocManaged((void**)&digest_c, SHA256_DIGEST_LENGTH);
+  unsigned char *digest_c;
+  cudaMallocManaged((void **)&digest_c, SHA256_DIGEST_LENGTH);
   unsigned char digest[SHA256_DIGEST_LENGTH] = {};
 
   kernel<<<1, 1>>>(d_c, d_len, digest_c);

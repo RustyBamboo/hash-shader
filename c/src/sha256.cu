@@ -39,33 +39,34 @@ __device__ void SHA256(const unsigned char *d, size_t n, unsigned char *md) {
  *      * Idea behind separate cases for pre-defined lengths is to let the
  *       * compiler decide if it's appropriate to unroll small loops.
  *        */
-#define HASH_MAKE_STRING(c, s)                              \
-  do {                                                      \
-    unsigned long ll;                                       \
-    unsigned int nn;                                        \
-    switch ((c)->md_len) {                                  \
-      case SHA256_DIGEST_LENGTH:                            \
-        for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) { \
-          ll = (c)->h[nn];                                  \
-          (void)HOST_l2c(ll, (s));                          \
-        }                                                   \
-        break;                                              \
-      default:                                              \
-        if ((c)->md_len > SHA256_DIGEST_LENGTH) return 0;   \
-        for (nn = 0; nn < (c)->md_len / 4; nn++) {          \
-          ll = (c)->h[nn];                                  \
-          (void)HOST_l2c(ll, (s));                          \
-        }                                                   \
-        break;                                              \
-    }                                                       \
+#define HASH_MAKE_STRING(c, s)                                                 \
+  do {                                                                         \
+    unsigned long ll;                                                          \
+    unsigned int nn;                                                           \
+    switch ((c)->md_len) {                                                     \
+    case SHA256_DIGEST_LENGTH:                                                 \
+      for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) {                      \
+        ll = (c)->h[nn];                                                       \
+        (void)HOST_l2c(ll, (s));                                               \
+      }                                                                        \
+      break;                                                                   \
+    default:                                                                   \
+      if ((c)->md_len > SHA256_DIGEST_LENGTH)                                  \
+        return 0;                                                              \
+      for (nn = 0; nn < (c)->md_len / 4; nn++) {                               \
+        ll = (c)->h[nn];                                                       \
+        (void)HOST_l2c(ll, (s));                                               \
+      }                                                                        \
+      break;                                                                   \
+    }                                                                          \
   } while (0)
 
 #define HASH_UPDATE SHA256_Update
 #define HASH_TRANSFORM SHA256_Transform
 #define HASH_FINAL SHA256_Final
 #define HASH_BLOCK_DATA_ORDER sha256_block_data_order
-    __device__ void
-    sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
+__device__ void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
+                                        size_t num);
 
 #include "md32_common_cu.h"
 
@@ -162,22 +163,22 @@ __device__ inline void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
 
 #else
 
-#define ROUND_00_15(i, a, b, c, d, e, f, g, h)   \
-  do {                                           \
-    T1 += h + Sigma1(e) + Ch(e, f, g) + K256[i]; \
-    h = Sigma0(a) + Maj(a, b, c);                \
-    d += T1;                                     \
-    h += T1;                                     \
+#define ROUND_00_15(i, a, b, c, d, e, f, g, h)                                 \
+  do {                                                                         \
+    T1 += h + Sigma1(e) + Ch(e, f, g) + K256[i];                               \
+    h = Sigma0(a) + Maj(a, b, c);                                              \
+    d += T1;                                                                   \
+    h += T1;                                                                   \
   } while (0)
 
-#define ROUND_16_63(i, a, b, c, d, e, f, g, h, X)    \
-  do {                                               \
-    s0 = X[(i + 1) & 0x0f];                          \
-    s0 = sigma0(s0);                                 \
-    s1 = X[(i + 14) & 0x0f];                         \
-    s1 = sigma1(s1);                                 \
-    T1 = X[(i)&0x0f] += s0 + s1 + X[(i + 9) & 0x0f]; \
-    ROUND_00_15(i, a, b, c, d, e, f, g, h);          \
+#define ROUND_16_63(i, a, b, c, d, e, f, g, h, X)                              \
+  do {                                                                         \
+    s0 = X[(i + 1) & 0x0f];                                                    \
+    s0 = sigma0(s0);                                                           \
+    s1 = X[(i + 14) & 0x0f];                                                   \
+    s1 = sigma1(s1);                                                           \
+    T1 = X[(i)&0x0f] += s0 + s1 + X[(i + 9) & 0x0f];                           \
+    ROUND_00_15(i, a, b, c, d, e, f, g, h);                                    \
   } while (0)
 
 __device__ inline void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
