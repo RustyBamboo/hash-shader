@@ -1,5 +1,8 @@
 **.pdf
 
+*.swp
+*.swo
+
 c/build/*
 c/test
-
+c/cuda_test

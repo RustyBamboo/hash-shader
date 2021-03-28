@@ -1,6 +1,9 @@
-#include "sha256.h"
+#ifndef HASH_SHADER_SHA256_CU
+#define HASH_SHADER_SHA256_CU
 
-int SHA256_Init(SHA256_CTX *c) {
+#include "sha256_cu.h"
+
+__device__ int SHA256_Init(SHA256_CTX *c) {
   memset(c, 0, sizeof(*c));
   c->h[0] = 0x6a09e667UL;
   c->h[1] = 0xbb67ae85UL;
@@ -14,7 +17,7 @@ int SHA256_Init(SHA256_CTX *c) {
   return 1;
 }
 
-void SHA256(const unsigned char *d, size_t n, unsigned char *md) {
+__device__ void SHA256(const unsigned char *d, size_t n, unsigned char *md) {
   SHA256_CTX c;
   SHA256_Init(&c);
   SHA256_Update(&c, d, n);
@@ -61,16 +64,13 @@ void SHA256(const unsigned char *d, size_t n, unsigned char *md) {
 #define HASH_TRANSFORM SHA256_Transform
 #define HASH_FINAL SHA256_Final
 #define HASH_BLOCK_DATA_ORDER sha256_block_data_order
-#ifndef SHA256_ASM
-static
-#endif
-    void
+    __device__ void
     sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "md32_common.h"
+#include "md32_common_cu.h"
 
 #ifndef SHA256_ASM
-static const SHA_LONG K256[64] = {
+__constant__ SHA_LONG K256[64] = {
     0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL, 0x3956c25bUL,
     0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL, 0xd807aa98UL, 0x12835b01UL,
     0x243185beUL, 0x550c7dc3UL, 0x72be5d74UL, 0x80deb1feUL, 0x9bdc06a7UL,
@@ -98,12 +98,12 @@ static const SHA_LONG K256[64] = {
 #define Ch(x, y, z) (((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
-                                    size_t num) {
+__device__ inline void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
+                                               size_t num) {
   unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1, T2;
   SHA_LONG X[16], l;
   int i;
-  const unsigned char *data = (unsigned char*)in;
+  const unsigned char *data = (unsigned char *)in;
 
   while (num--) {
     a = ctx->h[0];
@@ -180,8 +180,8 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
     ROUND_00_15(i, a, b, c, d, e, f, g, h);          \
   } while (0)
 
-static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
-                                    size_t num) {
+__device__ inline void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
+                                               size_t num) {
   unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1;
   SHA_LONG X[16];
   int i;
@@ -310,4 +310,5 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
   }
 }
 
+#endif
 #endif
