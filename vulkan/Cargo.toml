@@ -1,0 +1,22 @@
+[package]
+name = "vulkan"
+version = "0.1.0"
+authors = ["RustyBamboo <d@volya.xyz>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["use-compiled-tools"]
+use-installed-tools = ["spirv-builder/use-installed-tools"]
+use-compiled-tools = ["spirv-builder/use-compiled-tools"]
+
+[dependencies]
+alkomp = {path = "/home/daniel/workspace/quphase/gpu-online/alkomp", branch="web"}
+wgpu = {path = "/home/daniel/workspace/quphase/gpu-online/wgpu-rs"}
+futures = "*"
+
+
+
+[build-dependencies]
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "4395b841141", default-features = false }
