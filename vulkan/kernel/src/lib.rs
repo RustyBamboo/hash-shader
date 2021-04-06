@@ -111,14 +111,8 @@ fn test_K() {
     }
 }
 
-#[allow(unused_attributes)]
-#[spirv(compute(threads(1)))]
-pub fn main_cs(
-    #[spirv(global_invocation_id)] gid: UVec3,
-    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],
-    #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] hash: &mut [u32],
-) {
-    let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h, mut t1, mut t2): (
+fn hash_fn(text: &[u32], hash: &mut[u32]) {
+     let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h, mut t1, mut t2): (
         u32,
         u32,
         u32,
@@ -149,6 +143,7 @@ pub fn main_cs(
     // Compute the remaining message schedule
     for i in 16..64 {
         m[i] = sigma0(m[i - 2]) + m[i - 7] + sigma0(m[i - 15]) + m[i - 16];
+        //println!("{} {:#034b}", i, m[i]);
     }
 
     // Do compression
@@ -184,5 +179,47 @@ pub fn main_cs(
     hash[6] = g;
     hash[7] = h;
 
-    //hash[0] = 1;
+    //hash[0] = 1; 
+}
+
+#[test]
+fn test_hash_fn() {
+    let word: String = String::from("abc");
+    let mut init: Vec<u8> = word.into_bytes();
+
+    let msg_size = (init.len() * 8) as u64; // in bits
+
+    // Add a 1 as a delimiter
+    init.push(0x80 as u8);
+    let size: usize = (448u32 / 8u32 - init.len() as u32) as usize;
+
+    // Pad with zeros
+    let remaining = vec![0u8; size];
+    init.extend(&remaining);
+
+    // Make the last 64 bits be the size
+    let size = (msg_size).to_be_bytes();
+    init.extend(&size);
+
+    let mut text = Vec::new();
+
+    use std::convert::TryInto;
+    for i in 0..16 {
+        let val = u32::from_be_bytes(init[i * 4..(i + 1) * 4].try_into().unwrap());
+        text.push(val);
+    }      
+    
+    let mut hash = vec![0u32; 16];
+
+    hash_fn(text.as_slice(), hash.as_mut_slice());
+}
+
+#[allow(unused_attributes)]
+#[spirv(compute(threads(1)))]
+pub fn main_cs(
+    #[spirv(global_invocation_id)] gid: UVec3,
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] hash: &mut [u32],
+) {
+    hash_fn(text, hash);
 }
