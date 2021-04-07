@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 #![cfg_attr(
     target_arch = "spirv",
     no_std,
@@ -12,9 +13,13 @@ pub extern crate spirv_std_macros;
 use glam::UVec3;
 
 // Rotation right: u32.rotate_right(n: u32)
+fn rot_r(x: u32, n: u32) -> u32 {
+    x >> n | (x << (32 - n))
+}
 
 fn Sigma0(x: u32) -> u32 {
-    x.rotate_right(2) ^ x.rotate_right(13) ^ x.rotate_right(22)
+    rot_r(x, 2) ^ rot_r(x, 13) ^ rot_r(x, 22)
+    //x.rotate_right(2) ^ x.rotate_right(13) ^ x.rotate_right(22)
 }
 #[test]
 fn test_Sigma0() {
@@ -29,7 +34,8 @@ fn test_Sigma0() {
 }
 
 fn Sigma1(x: u32) -> u32 {
-    x.rotate_right(6) ^ x.rotate_right(11) ^ x.rotate_right(25)
+    rot_r(x, 6) ^ rot_r(x, 11) ^ rot_r(x, 25)
+    //x.rotate_right(6) ^ x.rotate_right(11) ^ x.rotate_right(25)
 }
 #[test]
 fn test_Sigma1() {
@@ -43,7 +49,8 @@ fn test_Sigma1() {
     );
 }
 fn sigma0(x: u32) -> u32 {
-    x.rotate_right(7) ^ x.rotate_right(18) ^ (x >> 3)
+    rot_r(x, 7) ^ rot_r(x, 18) ^ (x >> 3)
+    //x.rotate_right(7) ^ x.rotate_right(18) ^ (x >> 3)
 }
 #[test]
 fn test_sigma0() {
@@ -58,12 +65,22 @@ fn test_sigma0() {
 }
 
 fn sigma1(x: u32) -> u32 {
-    x.rotate_right(17) ^ x.rotate_right(19) ^ (x >> 10)
+    rot_r(x, 17) ^ rot_r(x, 19) ^ (x >> 10)
+    //x.rotate_right(17) ^ x.rotate_right(19) ^ (x >> 10)
 }
 #[test]
 fn test_sigma1() {
     let x: u32 = 0b00000000000000000011111111111111;
     let y: u32 = 0b00011000000000000110000000001111;
+    let r = sigma1(x);
+    assert_eq!(
+        r, y,
+        "Testing choice:\n x:{:#034b}\n y:{:#034b}\n e:{:#034b}",
+        x, y, r
+    );
+
+    let x: u32 = 0b00000000000000000000000000011000;
+    let y: u32 = 0b00000000000011110000000000000000;
     let r = sigma1(x);
     assert_eq!(
         r, y,
@@ -148,7 +165,7 @@ fn test_K() {
         // Convert the hex array (4 bits but represented as u8) to a u32
         let mut value: u32 = hex[7] as u32;
         for (i, h) in (0..hex.len() - 1).rev().enumerate() {
-            value += (hex[h] as u32 * 16_u32.pow(i as u32 + 1));
+            value += hex[h] as u32 * 16_u32.pow(i as u32 + 1);
         }
         assert_eq!(K[ix], value);
     }
@@ -179,8 +196,6 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
         0, 0, 0, 0,
     ];
 
-    let (mut ee, mut eee, mut eeee): (u32, u32, u32);
-
     // Create the message schedule
     // The first 16 are assumed to be given
     for i in 0..16 {
@@ -194,7 +209,6 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
     }
 
     // Do compression
-
     // The initial hash value as sqrt of primes
     a = 0x6a09e667;
     b = 0xbb67ae85;
@@ -217,6 +231,7 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
         a = t1 + t2;
     }
 
+    // Add the original hashed message with initial hash
     a += INIT_HASH[0];
     b += INIT_HASH[1];
     c += INIT_HASH[2];
@@ -226,6 +241,7 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
     g += INIT_HASH[6];
     h += INIT_HASH[7];
 
+    // Store result
     hash[0] = a;
     hash[1] = b;
     hash[2] = c;
@@ -266,7 +282,6 @@ fn test_hash_fn() {
     let mut hash = vec![0u32; 8];
 
     hash_fn(text.as_slice(), hash.as_mut_slice());
-    println!("{:?}", hash);
 
     let result: String = hash.into_iter().map(|x| format!("{:x}", x)).collect();
     assert_eq!(
@@ -278,13 +293,9 @@ fn test_hash_fn() {
 #[allow(unused_attributes)]
 #[spirv(compute(threads(1)))]
 pub fn main_cs(
-    #[spirv(global_invocation_id)] gid: UVec3,
+    #[spirv(global_invocation_id)] _gid: UVec3,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],
     #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] hash: &mut [u32],
 ) {
-
     hash_fn(text, hash);
-    //hash[0] = 1;
 }
-
-// [3128432319, 2399260650, 1094795486, 1571693091, 2953011619, 2518121116, 3021012833, 4060091821]
