@@ -175,7 +175,11 @@ const INIT_HASH: [u32; 8] = [
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 ];
 
-fn hash_fn(text: &[u32], hash: &mut [u32]) {
+fn hash_fn(text: &[u32], hash: &mut [u32], x: usize) {
+    // Offsets for loading and storing in data buffers
+    let load_offset = x * 16;
+    let store_offset = x * 8;
+
     let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h, mut t1, mut t2): (
         u32,
         u32,
@@ -199,7 +203,7 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
     // Create the message schedule
     // The first 16 are assumed to be given
     for i in 0..16 {
-        m[i] = text[i];
+        m[i] = text[load_offset + i];
     }
 
     // Compute the remaining message schedule
@@ -242,14 +246,14 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
     h += INIT_HASH[7];
 
     // Store result
-    hash[0] = a;
-    hash[1] = b;
-    hash[2] = c;
-    hash[3] = d;
-    hash[4] = e;
-    hash[5] = f;
-    hash[6] = g;
-    hash[7] = h;
+    hash[store_offset + 0] = a;
+    hash[store_offset + 1] = b;
+    hash[store_offset + 2] = c;
+    hash[store_offset + 3] = d;
+    hash[store_offset + 4] = e;
+    hash[store_offset + 5] = f;
+    hash[store_offset + 6] = g;
+    hash[store_offset + 7] = h;
 }
 
 #[test]
@@ -281,7 +285,7 @@ fn test_hash_fn() {
 
     let mut hash = vec![0u32; 8];
 
-    hash_fn(text.as_slice(), hash.as_mut_slice());
+    hash_fn(text.as_slice(), hash.as_mut_slice(), 0);
 
     let result: String = hash.into_iter().map(|x| format!("{:x}", x)).collect();
     assert_eq!(
@@ -293,9 +297,9 @@ fn test_hash_fn() {
 #[allow(unused_attributes)]
 #[spirv(compute(threads(1)))]
 pub fn main_cs(
-    #[spirv(global_invocation_id)] _gid: UVec3,
+    #[spirv(global_invocation_id)] gid: UVec3,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],
     #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] hash: &mut [u32],
 ) {
-    hash_fn(text, hash);
+    hash_fn(text, hash, gid.x as usize);
 }
