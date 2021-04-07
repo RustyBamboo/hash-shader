@@ -6,5 +6,6 @@
 c/build/*
 c/test
 c/cuda_test
+c/main
 
 **/target

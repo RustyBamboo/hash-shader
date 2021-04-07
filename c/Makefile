@@ -8,6 +8,9 @@ arch=sm_50
 INCLUDES=-Iinclude
 FLAGS= -Wall -g $(INCLUDES)
 
+cuda_main: src/main.cu src/sha256.cu include/sha256_cu.h include/test.h
+	nvcc -arch=$(arch) -o main src/main.cu $(INCLUDES)
+
 cuda_test: src/test.cu src/sha256.cu include/sha256_cu.h include/test.h
 	nvcc -arch=$(arch) -o cuda_test src/test.cu $(INCLUDES)
 
