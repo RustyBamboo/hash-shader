@@ -1,10 +1,7 @@
 use alkomp;
 
-use std::env;
-
 fn main() {
-    //let word: String = String::from("abc");
-    let word = env::args().nth(1).expect("Enter a string to hash");
+    let word: String = String::from("abc");
     let mut init: Vec<u8> = word.into_bytes();
 
     let msg_size = (init.len() * 8) as u64; // in bits
@@ -46,10 +43,20 @@ fn main() {
 
     device.call(compute, (1, 1, 1), &args.1);
 
+    //let text_res = futures::executor::block_on(device.get(&text_gpu)).unwrap();
+    //let text_res = &collatz[0..text.len()];
+
     let hash_res = futures::executor::block_on(device.get(&hash_gpu)).unwrap();
     let hash_res = &hash_res[0..hash.len()];
 
+    //println!("{:?}", hash_res);
+    //for h in 0..hash_res.len() {
+    //    println!("{:#034b}", hash_res[h]);
+    //}
     let result: String = hash_res.into_iter().map(|x| format!("{:x}", x)).collect();
-    println!("{}", result);
+    //println!("{}", result);
+    assert_eq!(
+        result,
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
 }
-
