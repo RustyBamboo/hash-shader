@@ -234,8 +234,6 @@ fn hash_fn(text: &[u32], hash: &mut [u32]) {
     hash[5] = f;
     hash[6] = g;
     hash[7] = h;
-
-    //hash[0] = 1;
 }
 
 #[test]
@@ -268,6 +266,7 @@ fn test_hash_fn() {
     let mut hash = vec![0u32; 8];
 
     hash_fn(text.as_slice(), hash.as_mut_slice());
+    println!("{:?}", hash);
 
     let result: String = hash.into_iter().map(|x| format!("{:x}", x)).collect();
     assert_eq!(
@@ -283,5 +282,9 @@ pub fn main_cs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],
     #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] hash: &mut [u32],
 ) {
+
     hash_fn(text, hash);
+    //hash[0] = 1;
 }
+
+// [3128432319, 2399260650, 1094795486, 1571693091, 2953011619, 2518121116, 3021012833, 4060091821]

@@ -26,9 +26,7 @@ fn main() {
         text.push(val);
     }
 
-    println!("{:?}", text.len());
-
-    let hash = vec![0u32; 16];
+    let hash = vec![0u32; 8];
 
     let mut device = alkomp::Device::new(0);
     let text_gpu = device.to_device(text.as_slice());
@@ -45,11 +43,16 @@ fn main() {
 
     device.call(compute, (1, 1, 1), &args.1);
 
-    let collatz = futures::executor::block_on(device.get(&text_gpu)).unwrap();
-    let collatz = &text[0..text.len()];
+    //let text_res = futures::executor::block_on(device.get(&text_gpu)).unwrap();
+    //let text_res = &collatz[0..text.len()];
 
     let hash_res = futures::executor::block_on(device.get(&hash_gpu)).unwrap();
-    let hash_res = &hash[0..hash.len()];
-    println!("{:?}", collatz);
+    let hash_res = &hash_res[0..hash.len()];
+
     println!("{:?}", hash_res);
+    let result: String = hash_res.into_iter().map(|x| format!("{:x}", x)).collect();
+    assert_eq!(
+        result,
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
 }
