@@ -5,7 +5,7 @@ import time
 
 tests = {
     'abc': ['abc'],
-    'rust': ['rust is cool'],
+    'rust': ['"rust is cool"'],
     'multiple_3': ['1', '2', '3'],
     'multiple_50': [f"{i}XD" for i in range(50)],
     'multiple_250': [f"{i}XD" for i in range(250)],
@@ -21,7 +21,7 @@ def run(func, *args, **kwargs):
 
 if __name__ == '__main__':
     vulkan_runner = './vulkan/target/release/vulkan'
-    cuda_runner = './c/cuda_test'
+    cuda_runner = './c/cuda_main'
 
     elapsed_times = []
 
