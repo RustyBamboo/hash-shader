@@ -14,19 +14,62 @@ use glam::UVec3;
 // Rotation right: u32.rotate_right(n: u32)
 
 fn Sigma0(x: u32) -> u32 {
-    x.rotate_right(30) ^ x.rotate_right(19) ^ x.rotate_right(10)
+    x.rotate_right(2) ^ x.rotate_right(13) ^ x.rotate_right(22)
+}
+#[test]
+fn test_Sigma0() {
+    let x: u32 = 0b00000000000000000011111111111111;
+    let y: u32 = 0b00111111000001111111001111111110;
+    let r = Sigma0(x);
+    assert_eq!(
+        r, y,
+        "Testing choice:\n x:{:#034b}\n y:{:#034b}\n e:{:#034b}",
+        x, y, r
+    );
 }
 
 fn Sigma1(x: u32) -> u32 {
-    x.rotate_right(26) ^ x.rotate_right(21) ^ x.rotate_right(7)
+    x.rotate_right(6) ^ x.rotate_right(11) ^ x.rotate_right(25)
 }
-
+#[test]
+fn test_Sigma1() {
+    let x: u32 = 0b00000000000000000011111111111111;
+    let y: u32 = 0b00000011111111111111111101111000;
+    let r = Sigma1(x);
+    assert_eq!(
+        r, y,
+        "Testing choice:\n x:{:#034b}\n y:{:#034b}\n e:{:#034b}",
+        x, y, r
+    );
+}
 fn sigma0(x: u32) -> u32 {
-    x.rotate_right(25) ^ x.rotate_right(14) ^ (x >> 3)
+    x.rotate_right(7) ^ x.rotate_right(18) ^ (x >> 3)
+}
+#[test]
+fn test_sigma0() {
+    let x: u32 = 0b00000000000000000011111111111111;
+    let y: u32 = 0b11110001111111111100011110000000;
+    let r = sigma0(x);
+    assert_eq!(
+        r, y,
+        "Testing choice:\n x:{:#034b}\n y:{:#034b}\n e:{:#034b}",
+        x, y, r
+    );
 }
 
 fn sigma1(x: u32) -> u32 {
-    x.rotate_right(15) ^ x.rotate_right(13) ^ (x >> 10)
+    x.rotate_right(17) ^ x.rotate_right(19) ^ (x >> 10)
+}
+#[test]
+fn test_sigma1() {
+    let x: u32 = 0b00000000000000000011111111111111;
+    let y: u32 = 0b00011000000000000110000000001111;
+    let r = sigma1(x);
+    assert_eq!(
+        r, y,
+        "Testing choice:\n x:{:#034b}\n y:{:#034b}\n e:{:#034b}",
+        x, y, r
+    );
 }
 
 // Choice operation
@@ -111,8 +154,12 @@ fn test_K() {
     }
 }
 
-fn hash_fn(text: &[u32], hash: &mut[u32]) {
-     let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h, mut t1, mut t2): (
+const INIT_HASH: [u32; 8] = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+];
+
+fn hash_fn(text: &[u32], hash: &mut [u32]) {
+    let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h, mut t1, mut t2): (
         u32,
         u32,
         u32,
@@ -142,7 +189,7 @@ fn hash_fn(text: &[u32], hash: &mut[u32]) {
 
     // Compute the remaining message schedule
     for i in 16..64 {
-        m[i] = sigma0(m[i - 2]) + m[i - 7] + sigma0(m[i - 15]) + m[i - 16];
+        m[i] = sigma1(m[i - 2]) + m[i - 7] + sigma0(m[i - 15]) + m[i - 16];
         //println!("{} {:#034b}", i, m[i]);
     }
 
@@ -158,7 +205,7 @@ fn hash_fn(text: &[u32], hash: &mut[u32]) {
     g = 0x1f83d9ab;
     h = 0x5be0cd19;
     for i in 0..64 {
-        t1 = h + Sigma1(e) + ch(e, f, g) + K[i] + m[i];
+        t1 = Sigma1(e) + ch(e, f, g) + h + K[i] + m[i];
         t2 = Sigma0(a) + maj(a, b, c);
         h = g;
         g = f;
@@ -170,6 +217,15 @@ fn hash_fn(text: &[u32], hash: &mut[u32]) {
         a = t1 + t2;
     }
 
+    a += INIT_HASH[0];
+    b += INIT_HASH[1];
+    c += INIT_HASH[2];
+    d += INIT_HASH[3];
+    e += INIT_HASH[4];
+    f += INIT_HASH[5];
+    g += INIT_HASH[6];
+    h += INIT_HASH[7];
+
     hash[0] = a;
     hash[1] = b;
     hash[2] = c;
@@ -179,7 +235,7 @@ fn hash_fn(text: &[u32], hash: &mut[u32]) {
     hash[6] = g;
     hash[7] = h;
 
-    //hash[0] = 1; 
+    //hash[0] = 1;
 }
 
 #[test]
@@ -207,11 +263,17 @@ fn test_hash_fn() {
     for i in 0..16 {
         let val = u32::from_be_bytes(init[i * 4..(i + 1) * 4].try_into().unwrap());
         text.push(val);
-    }      
-    
-    let mut hash = vec![0u32; 16];
+    }
+
+    let mut hash = vec![0u32; 8];
 
     hash_fn(text.as_slice(), hash.as_mut_slice());
+
+    let result: String = hash.into_iter().map(|x| format!("{:x}", x)).collect();
+    assert_eq!(
+        result,
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
 }
 
 #[allow(unused_attributes)]
