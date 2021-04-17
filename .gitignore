@@ -4,7 +4,8 @@
 *.swo
 
 c/build/*
-c/test
+c/cpu_main
+c/cpu_test
 c/cuda_test
 c/cuda_main
 
