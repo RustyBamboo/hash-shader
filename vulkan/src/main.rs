@@ -7,7 +7,7 @@ use std::env;
 /// - Append 0s
 /// - The last 64 bits denote the size of original message
 fn prepare_for_gpu(word: String) -> (Vec<u32>, u32) {
-    let mut init: Vec<u8> = word.into_bytes();
+    let mut init: Vec<u8> = hex::decode(word).expect("The input must be hex");
 
     let msg_size = (init.len() * 8) as u64; // in bits
 

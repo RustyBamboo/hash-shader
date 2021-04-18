@@ -2,7 +2,7 @@
 
 ## To run on GPU:
 ```
-cargo run --release "I like cheese"
+cargo run --release 00ff a1b2
 ```
 This will build everything (including the SPIRV kernel) and then search for available GPUs and select the first one possible.
 

@@ -15,6 +15,7 @@ use-compiled-tools = ["spirv-builder/use-compiled-tools"]
 alkomp = { git = "https://github.com/RustyBamboo/alkomp", branch="web"}
 wgpu = { git = "https://github.com/gfx-rs/wgpu-rs", rev = "1de388afacee" }
 futures = "*"
+hex = "*"
 
 
 
