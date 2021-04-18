@@ -4,7 +4,9 @@ version = "0.1.0"
 authors = ["RustyBamboo <d@volya.xyz>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "blockchain-val"
+path = "src/blockchain-val.rs"
 
 [features]
 default = ["use-compiled-tools"]
@@ -16,6 +18,7 @@ alkomp = { git = "https://github.com/RustyBamboo/alkomp", branch="web"}
 wgpu = { git = "https://github.com/gfx-rs/wgpu-rs", rev = "1de388afacee" }
 futures = "*"
 hex = "*"
+csv = "*"
 
 
 
