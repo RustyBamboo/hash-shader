@@ -31,12 +31,14 @@ fn main() {
     let mut device = alkomp::Device::new(0);
     let text_gpu = device.to_device(text.as_slice());
     let hash_gpu = device.to_device(hash.as_slice());
+    let iter_gpu = device.to_device(&[0u32]);
 
     let shader = wgpu::include_spirv!(env!("kernel.spv"));
 
     let args = alkomp::ParamsBuilder::new()
         .param(Some(&text_gpu))
         .param(Some(&hash_gpu))
+        .param(Some(&iter_gpu))
         .build(Some(0));
 
     let compute = device.compile("main_cs", &shader, &args.0).unwrap();

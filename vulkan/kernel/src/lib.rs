@@ -175,9 +175,9 @@ const INIT_HASH: [u32; 8] = [
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 ];
 
-fn hash_fn(text: &[u32], hash: &mut [u32], x: usize) {
+fn hash_fn(text: &[u32], hash: &mut [u32], x: usize, offset: usize, iter: usize) {
     // Offsets for loading and storing in data buffers
-    let load_offset = x * 16;
+    let load_offset = (iter + x + offset) * 16;
     let store_offset = x * 8;
 
     let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h, mut t1, mut t2): (
@@ -214,14 +214,26 @@ fn hash_fn(text: &[u32], hash: &mut [u32], x: usize) {
 
     // Do compression
     // The initial hash value as sqrt of primes
-    a = 0x6a09e667;
-    b = 0xbb67ae85;
-    c = 0x3c6ef372;
-    d = 0xa54ff53a;
-    e = 0x510e527f;
-    f = 0x9b05688c;
-    g = 0x1f83d9ab;
-    h = 0x5be0cd19;
+    if iter == 0 {
+        a = INIT_HASH[0];
+        b = INIT_HASH[1];
+        c = INIT_HASH[2];
+        d = INIT_HASH[3];
+        e = INIT_HASH[4];
+        f = INIT_HASH[5];
+        g = INIT_HASH[6];
+        h = INIT_HASH[7];
+    } else {
+        a = hash[store_offset + 0];
+        b = hash[store_offset + 1];
+        c = hash[store_offset + 2];
+        d = hash[store_offset + 3];
+        e = hash[store_offset + 4];
+        f = hash[store_offset + 5];
+        g = hash[store_offset + 6];
+        h = hash[store_offset + 7];
+    }
+
     for i in 0..64 {
         t1 = Sigma1(e) + ch(e, f, g) + h + K[i] + m[i];
         t2 = Sigma0(a) + maj(a, b, c);
@@ -236,14 +248,25 @@ fn hash_fn(text: &[u32], hash: &mut [u32], x: usize) {
     }
 
     // Add the original hashed message with initial hash
-    a += INIT_HASH[0];
-    b += INIT_HASH[1];
-    c += INIT_HASH[2];
-    d += INIT_HASH[3];
-    e += INIT_HASH[4];
-    f += INIT_HASH[5];
-    g += INIT_HASH[6];
-    h += INIT_HASH[7];
+    if iter == 0 {
+        a += INIT_HASH[0];
+        b += INIT_HASH[1];
+        c += INIT_HASH[2];
+        d += INIT_HASH[3];
+        e += INIT_HASH[4];
+        f += INIT_HASH[5];
+        g += INIT_HASH[6];
+        h += INIT_HASH[7];
+    } else {
+        a += hash[store_offset + 0];
+        b += hash[store_offset + 1];
+        c += hash[store_offset + 2];
+        d += hash[store_offset + 3];
+        e += hash[store_offset + 4];
+        f += hash[store_offset + 5];
+        g += hash[store_offset + 6];
+        h += hash[store_offset + 7];
+    }
 
     // Store result
     hash[store_offset + 0] = a;
@@ -285,7 +308,7 @@ fn test_hash_fn() {
 
     let mut hash = vec![0u32; 8];
 
-    hash_fn(text.as_slice(), hash.as_mut_slice(), 0);
+    hash_fn(text.as_slice(), hash.as_mut_slice(), 0, 0, 0);
 
     let result: String = hash.into_iter().map(|x| format!("{:x}", x)).collect();
     assert_eq!(
@@ -300,6 +323,20 @@ pub fn main_cs(
     #[spirv(global_invocation_id)] gid: UVec3,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],
     #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] hash: &mut [u32],
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 2)] iter: &[u32],
 ) {
-    hash_fn(text, hash, gid.x as usize);
+    // The sha specification loops in blocks of 512
+    let num_loops: usize = iter[gid.x as usize] as usize;
+
+    // Calculate where the memory offset for each kernel instance
+    // which depends upon the number of iterations required by all previous
+    // kernel invocations
+    let mut offset = 0;
+    for i in 0..gid.x as usize {
+        offset += iter[i] as usize - 1;
+    }
+
+    for i in 0..num_loops {
+        hash_fn(text, hash, gid.x as usize, offset, i);
+    }
 }
