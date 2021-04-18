@@ -4,9 +4,9 @@
 *.swo
 
 c/build/*
-c/cpu_main
+c/cpu_bitcoin
 c/cpu_test
 c/cuda_test
-c/cuda_main
+c/cuda_bitcoin
 
 **/target

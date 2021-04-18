@@ -1,4 +1,4 @@
-all: cpu_test cpu_main cuda_test cuda_main
+all: cpu_test cpu_bitcoin cuda_test cuda_bitcoin
 
 SHA256=-Lbuild -lsha256
 SHA256_CU=-Lbuild -lsha256_cu
@@ -8,14 +8,14 @@ arch=sm_75
 INCLUDES=-Iinclude
 FLAGS= -Wall -g $(INCLUDES)
 
-cuda_main: src/main.cu src/sha256.cu include/sha256_cu.h include/test.h
-	nvcc -arch=$(arch) -o cuda_main src/main.cu $(INCLUDES)
+cuda_bitcoin: src/bitcoin.cu src/sha256.cu include/sha256_cu.h include/test.h include/blocks_from_csv.h
+	nvcc -arch=$(arch) -o cuda_bitcoin src/bitcoin.cu $(INCLUDES)
 
 cuda_test: src/test.cu src/sha256.cu include/sha256_cu.h include/test.h
 	nvcc -arch=$(arch) -o cuda_test src/test.cu $(INCLUDES)
 
-cpu_main: src/main.c build/libsha256.a
-	cc -o cpu_main src/main.c $(FLAGS) $(SHA256)
+cpu_bitcoin: src/bitcoin.c build/libsha256.a include/blocks_from_csv.h
+	cc -o cpu_bitcoin src/bitcoin.c $(FLAGS) $(SHA256)
 
 cpu_test: src/test.c include/test.h build/libsha256.a
 	cc -o cpu_test src/test.c $(FLAGS) $(SHA256)
