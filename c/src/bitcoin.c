@@ -3,42 +3,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "blocks_from_csv.h"
+#include "test_block_chain.h"
 
 char* run_sha256(unsigned char *block_buf, int *block_starts, int num_blocks);
+
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     printf("Must have at least one argument\n");
     return -1;
   }
-  struct Blocks b =  blocks_from_csv(argv[1]);
-
-  /*
-  printf("main:\n");
-  for (int i = 0; i < b.block_starts[b.num_blocks]; i+=1) {
-    int x = (unsigned char)b.block_buf[i];
-    printf("%02x,", x);
-  }
-  printf("\n");
-  for (int i = 0; i < b.num_blocks+1; ++i) {
-    printf("%d ", b.block_starts[i]);
-  }
-  printf("\n");
-  */
-
-  char* _hashes = run_sha256((unsigned char *)b.block_buf, b.block_starts, b.num_blocks);
-  free(b.block_starts);
-  free(b.block_buf);
-
-  strcmp(b.hashes[0], strtok(_hashes, " ")) != 0 ? printf("%d: True\n", 0) : printf("%d: False\n", 0);
-  free(b.hashes[0]);
-  for (int i = 1; i < b.num_blocks; ++i) {
-    strcmp(b.hashes[i], strtok(NULL, " ")) != 0 ? printf("%d: True\n", i) : printf("%d: False\n", i);
-    free(b.hashes[i]);
-  }
-  free(b.hashes);
-  free(_hashes);
+  test_block_chain(argv[1], run_sha256);
   return 0;
 }
 

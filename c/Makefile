@@ -3,6 +3,7 @@ all: cpu_test cpu_bitcoin cuda_test cuda_bitcoin
 SHA256=-Lbuild -lsha256
 SHA256_CU=-Lbuild -lsha256_cu
 
+# https://patrickorcl.medium.com/compile-with-nvcc-3566fbdfdbf
 arch=sm_75
 
 INCLUDES=-Iinclude
