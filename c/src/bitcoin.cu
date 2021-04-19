@@ -18,10 +18,14 @@ int main(int argc, char *argv[]) {
 }
 
 __global__ void kernel(unsigned char *block_buf, int *block_starts, int num_blocks, unsigned char* digests) {
-  int i = threadIdx.x + blockIdx.x * blockDim.x;;
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
   if (i < num_blocks) {
-    SHA256(&block_buf[block_starts[i]], block_starts[i+1] - block_starts[i], &digests[i*SHA256_DIGEST_LENGTH]);
-    SHA256(&digests[i*SHA256_DIGEST_LENGTH], SHA256_DIGEST_LENGTH, &digests[i*SHA256_DIGEST_LENGTH]);
+    unsigned char intermidiate_digest[SHA256_DIGEST_LENGTH];
+    int front = block_starts[i];
+    int back = block_starts[i+1];
+    SHA256(&block_buf[front], back - front, intermidiate_digest);
+    __syncthreads();
+    SHA256(intermidiate_digest, SHA256_DIGEST_LENGTH, digests+(i*SHA256_DIGEST_LENGTH));
   }
 }
 

@@ -9,13 +9,13 @@ arch=sm_75
 INCLUDES=-Iinclude
 FLAGS= -Wall -g $(INCLUDES)
 
-cuda_bitcoin: src/bitcoin.cu src/sha256.cu include/sha256_cu.h include/test.h include/blocks_from_csv.h
+cuda_bitcoin: src/bitcoin.cu src/sha256.cu include/sha256_cu.h include/test.h include/test_block_chain.h
 	nvcc -arch=$(arch) -o cuda_bitcoin src/bitcoin.cu $(INCLUDES)
 
 cuda_test: src/test.cu src/sha256.cu include/sha256_cu.h include/test.h
 	nvcc -arch=$(arch) -o cuda_test src/test.cu $(INCLUDES)
 
-cpu_bitcoin: src/bitcoin.c build/libsha256.a include/blocks_from_csv.h
+cpu_bitcoin: src/bitcoin.c build/libsha256.a include/test_block_chain.h
 	cc -o cpu_bitcoin src/bitcoin.c $(FLAGS) $(SHA256)
 
 cpu_test: src/test.c include/test.h build/libsha256.a

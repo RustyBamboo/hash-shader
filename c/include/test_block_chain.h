@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include "blocks_from_csv.h"
 
 
@@ -17,8 +18,13 @@ void test_block_chain(char* csv_file, char*(*run)(unsigned char *block_buf, int 
   }
   printf("\n");
   */
-
+  clock_t t;
+  t = clock();
   char* _hashes = run((unsigned char *)b.block_buf, b.block_starts, b.num_blocks);
+  t = clock() - t;
+  double time_taken = ((double)t)/CLOCKS_PER_SEC;
+
+
   free(b.block_starts);
   free(b.block_buf);
 
@@ -30,4 +36,5 @@ void test_block_chain(char* csv_file, char*(*run)(unsigned char *block_buf, int 
   }
   free(b.hashes);
   free(_hashes);
+  printf("total time: %f\n", time_taken);
 }
