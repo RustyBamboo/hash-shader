@@ -8,12 +8,27 @@
 
 char* run_sha256(unsigned char *block_buf, int *block_starts, int num_blocks);
 
+
+void* pinned_alloc(size_t n) {
+  void* h_aPinned = NULL;
+  cudaError_t status = cudaMallocHost((void**)&h_aPinned, n);
+  if (status != cudaSuccess) {
+    printf("Error allocating pinned host memory\n");
+    exit(-1);
+  }
+  return h_aPinned;
+}
+
+void pinned_free(void* p) {
+  cudaFreeHost(p);
+}
+
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     printf("Must have at least one argument\n");
     return -1;
   }
-  test_block_chain(argv[1], run_sha256);
+  test_block_chain(argv[1], run_sha256, pinned_alloc, pinned_free);
   return 0;
 }
 
@@ -23,7 +38,7 @@ __global__ void kernel(unsigned char *block_buf, int *block_starts, int num_bloc
     unsigned char intermidiate_digest[SHA256_DIGEST_LENGTH];
     int front = block_starts[i];
     int back = block_starts[i+1];
-    SHA256(&block_buf[front], back - front, intermidiate_digest);
+    SHA256(block_buf + front, back - front, intermidiate_digest);
     __syncthreads();
     SHA256(intermidiate_digest, SHA256_DIGEST_LENGTH, digests+(i*SHA256_DIGEST_LENGTH));
   }
@@ -43,8 +58,6 @@ char* run_sha256(unsigned char *block_buf, int *block_starts, int num_blocks) {
   unsigned char *dev_digests;
   cudaMallocManaged((void **)&dev_digests, SHA256_DIGEST_LENGTH * num_blocks);
   unsigned char digests[SHA256_DIGEST_LENGTH * num_blocks] = {};
-
-
 
   int num_thread_blocks = (num_blocks / 256) + 1;
   dim3 threadsPerThreadBlock(256);

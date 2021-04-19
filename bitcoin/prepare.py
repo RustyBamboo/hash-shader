@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 
 
-import urllib.request, json 
+import urllib.request, json
 
-blocks = range(129844, 130000)
+blocks = range(201290, 300000)
 
 
 for b in blocks:
-    print(f"Downloading block {b}")
-    f = open("block_data.csv", "a")
-    with urllib.request.urlopen(f"https://blockchain.info/block-height/{b}?format=json") as url:
+    print("Downloading block %s"%b)
+    f = open("block_data_200000_300000.csv", "a")
+    with urllib.request.urlopen("https://blockchain.info/block-height/%s?format=json"%b) as url:
         data = json.loads(url.read().decode())
 
     block = data['blocks'][0]
@@ -26,7 +26,7 @@ for b in blocks:
     
     header = ver + prev_block + mrkl_root + time + bits + nonce     
 
-    f.write(f"{header},{flip_hash}\n")
+    f.write("%s,%s\n"%(header, flip_hash))
     f.close() # so that is actually saves
 
 

@@ -8,7 +8,9 @@ struct Blocks
   char** hashes;
 };
 
-struct Blocks blocks_from_csv(const char* file_path) {
+struct Blocks blocks_from_csv(const char* file_path,
+                              void* (mem_alloc)(size_t),
+                              void (mem_free)(void*)) {
 
   int block_count = 0;
 
@@ -46,7 +48,7 @@ struct Blocks blocks_from_csv(const char* file_path) {
   fclose(bc);
   int block_buf_size = 0;
 
-  int* block_starts = (int*)malloc(sizeof(int)*(block_count+1));
+  int* block_starts = (int*)mem_alloc(sizeof(int)*(block_count+1));
   block_starts[0] = 0;
 
   for (int i = 0; i < block_count; ++i) {
@@ -58,7 +60,7 @@ struct Blocks blocks_from_csv(const char* file_path) {
   block_starts[block_count] = block_buf_size;
   //printf("%d\n", block_starts[block_count]);
 
-  char* block_buf = (char*)malloc(block_buf_size);
+  char* block_buf = (char*)mem_alloc(block_buf_size);
 
   //printf("block_buf_size: %d\n", block_buf_size);
 
