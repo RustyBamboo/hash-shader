@@ -9,6 +9,7 @@ struct Blocks
 };
 
 struct Blocks blocks_from_csv(const char* file_path,
+                              const int max_blocks,
                               void* (mem_alloc)(size_t),
                               void (mem_free)(void*)) {
 
@@ -17,7 +18,7 @@ struct Blocks blocks_from_csv(const char* file_path,
   FILE* bc = fopen(file_path, "r");
 
   // see how many lines
-  for (char c = getc(bc); c != EOF; c = getc(bc))
+  for (char c = getc(bc); c != EOF && (max_blocks == -1 || block_count < max_blocks); c = getc(bc))
     if (c == '\n')
       block_count += 1;
 

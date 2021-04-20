@@ -28,7 +28,8 @@ int main(int argc, char *argv[]) {
     printf("Must have at least one argument\n");
     return -1;
   }
-  test_block_chain(argv[1], run_sha256, pinned_alloc, pinned_free);
+
+  test_block_chain(argv[1], argc > 2 ? atoi(argv[2]) : -1, run_sha256, pinned_alloc, pinned_free);
   return 0;
 }
 

@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     printf("Must have at least one argument\n");
     return -1;
   }
-  test_block_chain(argv[1], run_sha256, malloc, free);
+  test_block_chain(argv[1], argc > 2 ? atoi(argv[2]) : -1, run_sha256, malloc, free);
   return 0;
 }
 
