@@ -114,7 +114,7 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 ::::
 
 :::: column
-![CPU vs Cuda vs Vulkan (Mapped Memory)](figs/performance_plot_mapped_buffer.png){width=205px}
+![CPU vs Cuda vs Vulkan (Non-Mapped/Non-Unified Memory)](figs/performance_plot_mapped_buffer.png){width=205px}
 ::::
 
 :::
