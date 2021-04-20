@@ -51,17 +51,13 @@ SHA256(SHA256(header)) =
 1dbd981fe6985776b644b173a4d0385ddc1aa2a829688d1e0000000000000000
 ```
 
-# SHA256
+# What is SHA256?
 
-- Pad a message *m* to closest multiple of *512*
-- Perform operations $\Sigma_0$, $\Sigma_1$, $\sigma_0$, $\sigma_1$ to create entries of message block
-- Compress the message block into 8, 32bit words. Use *initial_hash* as initialization
-- Add *initial_hash* to the compressed result
-- Repeat until all message blocks have been hashed
+![SHA256 Visualization](figs/sha256.jpg)
 
-# Why Bitcoin Blockchain?
+# Why Bitcoin Blockchain validation?
 
-## Why Blockchain Validation?
+## Why Blockchain validation?
 
 * Multi block validation is very parallelizable.
 * May be useful in the future.
@@ -91,8 +87,6 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 * Not restrict itself to any particular hardware (CPU/GPU), (AMD/Nvidia).
 * Supports multiple modern languages (including Rust).
 * Supports the SPIR-V.
-
-
 
 # Vulkan
 
