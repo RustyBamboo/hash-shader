@@ -1,7 +1,7 @@
 use alkomp;
 
 use std::env;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Prepare the text data for GPU by padding the bits to multiples of 512
 /// - Append 1 as a delimiter
@@ -37,7 +37,7 @@ fn prepare_for_gpu(word: String) -> (Vec<u32>, u32) {
     (text, (desired_size / 512) as u32)
 }
 
-fn sha<'a>(words: Vec<String>) -> Box<[u32]> {
+fn sha<'a>(words: Vec<String>) -> (Box<[u32]>, Duration) {
     let count = words.len();
 
     // A Vec of bit strings, and a vec of "number of iterations"
@@ -65,12 +65,14 @@ fn sha<'a>(words: Vec<String>) -> Box<[u32]> {
         .param(Some(&size_gpu))
         .build(Some(0));
 
+    let start_1 = Instant::now();
     let compute = device.compile("main_cs", &shader, &args.0).unwrap();
 
     device.call(compute, (count as u32, 1, 1), &args.1);
 
     let hash_res = futures::executor::block_on(device.get(&hash_gpu)).unwrap();
-    hash_res
+    let duration_1 = start_1.elapsed();
+    (hash_res, duration_1)
 }
 
 fn main() {
@@ -99,12 +101,9 @@ fn main() {
     }
 
     // ROUND 1 OF SHA
-    let start_1 = Instant::now();
 
-    let hash_res = sha(words);
+    let (hash_res, duration_1) = sha(words);
     let hash_res = &hash_res;
-
-    let duration_1 = start_1.elapsed();
 
     let result: String = hash_res.into_iter().map(|x| format!("{:08x}", x)).collect();
     let chunks = result
@@ -118,12 +117,8 @@ fn main() {
 
     // ROUND 2 OF SHA
 
-    let start_2 = Instant::now();
-
-    let hash_res = sha(words);
+    let (hash_res, duration_2) = sha(words);
     let hash_res = &hash_res;
-
-    let duration_2 = start_2.elapsed();
 
     let result: String = hash_res.into_iter().map(|x| format!("{:08x}", x)).collect();
     let chunks = result
