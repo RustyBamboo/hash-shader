@@ -34,10 +34,11 @@ for blocks in [10, 100, 999, 14999, -1]:
     for comp in validators:
         comp.run(sys.argv[1], blocks)
 
-
+plt.figure(figsize=(20,20))
+plt.rcParams.update({'font.size': 22})
 for comp in validators:
     comp.plot()
-plt.ylabel("computatiopn time (ms)");
-plt.xlabel("number of blocks verified");
-plt.legend()
-plt.show()
+plt.ylabel('computatiopn time (ms)');
+plt.xlabel('number of blocks verified');
+plt.legend(loc='upper left')
+plt.savefig(os.path.join(os.path.dirname(__file__), 'docs/performance_plot.png'))
