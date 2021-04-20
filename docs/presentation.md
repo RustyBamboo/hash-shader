@@ -11,11 +11,14 @@ header-includes:
 
 # Summary
 
-1. Introduction
-    - Bitcoin Blockchain Validation
-    - SHA256 
-    - Vulkan
-2. Results
+1. What did we do?
+  - Made GPU kernels/shaders to validate the BitCoin BlockChain
+2. Why?
+  -
+- How did it go?
+- Bitcoin Blockchain Validation
+- SHA256
+- Vulkan
 
 # Bitcoin Blockchain
 
@@ -67,3 +70,5 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 ![Rust-gpu is used to compile rust into SPIR-V](figs/vulkan-rust-gpu.png)
 
 # Results
+
+![CPU vs Cuda vs Vulkan](figs/performance_plot.png)
