@@ -79,16 +79,23 @@ fn main() {
         println!("Input path to CSV file containing blockchain data");
         return;
     }
+    let max_blocks : i32;
+    if paths.len() > 1 { max_blocks = paths[1].parse().unwrap() } else { max_blocks =  -1; }
 
     let mut rdr = csv::Reader::from_path(&paths[0]).expect("Failed to open file");
 
     let mut words = Vec::new();
     let mut expected = Vec::new();
 
+    let mut i = 0;
     for record in rdr.records() {
+        if max_blocks != -1 && i == max_blocks {
+            break;
+        }
         let record = record.expect("Failed");
         words.push(record[0].to_string());
         expected.push(record[1].to_string());
+        i += 1;
     }
 
     // ROUND 1 OF SHA
@@ -129,11 +136,5 @@ fn main() {
     for c in 0..chunks.len() {
         assert_eq!(expected[c], chunks[c]);
     }
-    println!("Validated {} blocks", chunks.len());
-    println!(
-        "{:?} + {:?} = {:?}",
-        duration_1,
-        duration_2,
-        duration_1 + duration_2
-    );
+    print!("{} {}", chunks.len(), (duration_1 + duration_2).as_millis());
 }
