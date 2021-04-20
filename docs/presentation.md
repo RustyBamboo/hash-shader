@@ -74,15 +74,10 @@ SHA256(SHA256(header)) =
 
 # Why Cuda and Vulkan? - CUDA
 
-
 ## Pros
 * Established in the GPU programming / HPC world.
 * Very well optimized
 * Very well supported
-
-## Cons
-* Not Free Open Source Software (FOSS).
-* Reliant on a profit driven organization.
 
 # Why Cuda and Vulkan? - Vulkan
 
@@ -97,9 +92,6 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 * Supports multiple modern languages (including Rust).
 * Supports the SPIR-V.
 
-## Cons
-* Not well established.
-* SPIR-V (rust-gpu) compilers are not well optimized.
 
 
 # Vulkan
@@ -116,8 +108,11 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 
 
 
-# How Did it Go?
+# How did it go?
 
+![Cuda Profile](figs/prof.png)
+
+# How did it go?
 ::: columns 
 
 :::: column
@@ -130,6 +125,21 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 
 :::
 
-# How Did it Go?
+# How did it go?
 
 ![CPU vs Cuda vs Vulkan](figs/performance_plot_titan.png){width=250px} 
+
+# How did it go?
+
+## Cuda
+
+## Cons
+* Not Free Open Source Software (FOSS).
+* Reliant on a profit driven organization.
+
+## Vulkan
+
+## Cons
+* Not well established.
+* SPIR-V (rust-gpu) compilers are not well optimized.
+* Lack of good profilers.
