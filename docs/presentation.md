@@ -120,7 +120,7 @@ Lets us write cross-platform (compute) code using *open source* standards to int
 
 ![CPU vs Cuda vs Vulkan](figs/performance_plot.png){width=250px}
 
-![CPU vs Cuda vs Vulkan (Mapped Memory)](figs/performance_plot.png){width=250px}
+![CPU vs Cuda vs Vulkan (Mapped Memory)](figs/performance_plot_mapped_buffer.png){width=250px}
 
 # How Did it Go?
 
