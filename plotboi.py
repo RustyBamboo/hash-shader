@@ -41,4 +41,4 @@ for comp in validators:
 plt.ylabel('computatiopn time (ms)');
 plt.xlabel('number of blocks verified');
 plt.legend(loc='upper left')
-plt.savefig(os.path.join(os.path.dirname(__file__), 'docs/performance_plot.png'))
+plt.savefig(os.path.join(os.path.dirname(__file__), 'docs/figs/performance_plot.png'))
