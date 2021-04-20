@@ -4,6 +4,7 @@ import sys
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import cpuinfo
 
 class BlockChainValidator:
     def __init__(self, cmd, name, color):
@@ -20,10 +21,12 @@ class BlockChainValidator:
     def plot(self):
         plt.plot(np.array(self.data)[:,0], np.array(self.data)[:,1], c=self.color, label=self.name, linewidth=7.0)
 
+gpu_name = subprocess.check_output(['nvidia-smi', '-L'])
+gpu_name = gpu_name[:gpu_name.find('UUID')-1]
 
-validators = [BlockChainValidator('c/cuda_bitcoin', 'Cuda', 'red'),
-              BlockChainValidator('c/cpu_bitcoin', 'CPU', 'blue'),
-              BlockChainValidator('vulkan/target/release/blockchain-val', 'rust gpu / Vulkan', 'green')]
+validators = [BlockChainValidator('c/cuda_bitcoin', 'Cuda: ' + gpu_name, 'red'),
+              BlockChainValidator('c/cpu_bitcoin', 'CPU: ' + cpuinfo.get_cpu_info()['brand_raw'] , 'blue'),
+              BlockChainValidator('vulkan/target/release/blockchain-val', 'rust gpu / Vulkan: ' + gpu_name, 'green')]
 
 # cuda crashes on some numbers for some reason
 for blocks in [10, 100, 999, 14999, -1]:
