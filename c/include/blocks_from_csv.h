@@ -18,12 +18,21 @@ struct Blocks blocks_from_csv(const char* file_path,
   FILE* bc = fopen(file_path, "r");
 
   // see how many lines
-  for (char c = getc(bc); c != EOF && (max_blocks == -1 || block_count < max_blocks); c = getc(bc))
+  for (char c = getc(bc); c != EOF; c = getc(bc))
     if (c == '\n')
       block_count += 1;
 
   fclose(bc);
   bc = fopen(file_path, "r");
+
+  if (max_blocks != -1)
+  {
+    if (max_blocks < block_count)
+    {
+      block_count = max_blocks;
+    }
+  }
+
 
   char** blocks = (char**)malloc(sizeof(char*)*block_count);
   char** hashes = (char**)malloc(sizeof(char*)*block_count);

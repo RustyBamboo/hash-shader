@@ -11,7 +11,7 @@ void test_block_chain(const char* csv_file,
 
   struct Blocks b =  blocks_from_csv(csv_file, max_blocks, mem_alloc, mem_free);
 
-  printf("%d\n", b.num_blocks);
+  printf("%d ", b.num_blocks);
   /*
   for (int i = 0; i < b.block_starts[b.num_blocks]; i+=1) {
     int x = (unsigned char)b.block_buf[i];
@@ -41,5 +41,5 @@ void test_block_chain(const char* csv_file,
   }
   free(b.hashes);
   free(_hashes);
-  printf("%fms\n", time_taken);
+  printf("%f\n", time_taken);
 }
