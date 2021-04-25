@@ -1,6 +1,8 @@
 # GPU-Based Bitcoin Blockchain Validation
 
-<p style="text-align:center"><img src="docs/logo.png" /></p>
+<p align="center">
+  <img src="docs/logo.png"/>
+</p>
 
 
 --------------------------------------------------------------------
