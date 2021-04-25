@@ -19,6 +19,10 @@ We also decided to use this as a testing ground to compare CUDA and Vulkan, as v
 
 Read the [Full Report](docs/bitcoin_gpu.pdf).
 
+## The Vulkan-based Stack
+
+The Vulkan kernel (shader) is written using [rust-gpu](https://github.com/EmbarkStudios/rust-gpu). [wgpu-rs](https://github.com/gfx-rs/wgpu-rs) is used for the Rust bindings to `WebGPU`. 
+
 # Compile the code
 
 ## Build the C / CPU, CUDA code
@@ -34,7 +38,7 @@ Read the [Full Report](docs/bitcoin_gpu.pdf).
 
 
 
-# Licencing Details
+# Licensing Details
 
 This project contains several files directly copied from the OpenSSL project ([https://github.com/openssl/openssl](https://github.com/openssl/openssl)), which is under the Apache 2.0 Licence.
 
