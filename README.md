@@ -1,6 +1,9 @@
-# GPU Based Bitcoin Blockchain Validation
+# GPU-Based Bitcoin Blockchain Validation
 
-![](docs/logo.png)
+<div style="text-align:center"><img src="docs/logo.png" /></div>
+
+
+--------------------------------------------------------------------
 
 ## Abstract
 The project consists of two primary goals: 1) implement kernels that validate several blocks' hash in the Bitcoin Blockchain in parallel, and 2) investigate using the open-source Vulkan standard as an alternative to CUDA. When compared to an equivalent sequential program run on the CPU, the open source tools were approximately 5 times slower than the sequential algorithm, and the proprietary CUDA was  approximately 2 times as fast as the sequential algorithm.
