@@ -1,4 +1,4 @@
-use alkomp;
+mod runner;
 
 use std::env;
 
@@ -55,14 +55,14 @@ fn main() {
     // Check number of bits
     assert_eq!(hash.len() * core::mem::size_of::<u32>() * 8, 8 * 32 * count);
 
-    let mut device = alkomp::Device::new(0);
+    let mut device = runner::Device::new(0);
     let text_gpu = device.to_device(texts.as_slice());
     let hash_gpu = device.to_device(hash.as_slice());
     let size_gpu = device.to_device(sizes.as_slice());
 
     let shader = wgpu::include_spirv!(env!("kernel.spv"));
 
-    let args = alkomp::ParamsBuilder::new()
+    let args = runner::ParamsBuilder::new()
         .param(Some(&text_gpu))
         .param(Some(&hash_gpu))
         .param(Some(&size_gpu))

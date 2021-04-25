@@ -1,4 +1,4 @@
-use alkomp;
+mod runner;
 
 use std::env;
 use std::time::{Duration, Instant};
@@ -51,7 +51,7 @@ fn sha<'a>(words: Vec<String>) -> (Box<[u32]>, Duration) {
     // Check number of bits
     assert_eq!(hash.len() * core::mem::size_of::<u32>() * 8, 8 * 32 * count);
 
-    let mut device = alkomp::Device::new(0);
+    let mut device = runner::Device::new(0);
 
     let text_gpu = device.to_device(texts.as_slice());
     let hash_gpu = device.to_device(hash.as_slice());
@@ -59,7 +59,7 @@ fn sha<'a>(words: Vec<String>) -> (Box<[u32]>, Duration) {
 
     let shader = wgpu::include_spirv!(env!("kernel.spv"));
 
-    let args = alkomp::ParamsBuilder::new()
+    let args = runner::ParamsBuilder::new()
         .param(Some(&text_gpu))
         .param(Some(&hash_gpu))
         .param(Some(&size_gpu))
@@ -81,8 +81,12 @@ fn main() {
         println!("Input path to CSV file containing blockchain data");
         return;
     }
-    let max_blocks : i32;
-    if paths.len() > 1 { max_blocks = paths[1].parse().unwrap() } else { max_blocks =  -1; }
+    let max_blocks: i32;
+    if paths.len() > 1 {
+        max_blocks = paths[1].parse().unwrap()
+    } else {
+        max_blocks = -1;
+    }
 
     let mut rdr = csv::Reader::from_path(&paths[0]).expect("Failed to open file");
 
