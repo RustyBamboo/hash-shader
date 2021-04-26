@@ -1,4 +1,5 @@
-# GPU-Based Bitcoin Blockchain Validation
+# SHA256 Compute Shader (Kernel) Written in Rust
+... with application to Validating the Bitcoin Blockchain
 
 <p align="center">
   <img src="docs/logo.png"/>
@@ -8,20 +9,19 @@
 --------------------------------------------------------------------
 
 ## Abstract
-The project consists of two primary goals: 1) implement kernels that validate several blocks' hash in the Bitcoin Blockchain in parallel, and 2) investigate using the open-source Vulkan standard as an alternative to CUDA. When compared to an equivalent sequential program run on the CPU, the open source tools were approximately 5 times slower than the sequential algorithm, and the proprietary CUDA was  approximately 2 times as fast as the sequential algorithm.
+The project consists of two primary goals: 1) implement kernels that validate several blocks' SHA256 hash in the Bitcoin Blockchain in parallel, and 2) investigate using the open-source Vulkan standard as an alternative to CUDA. When compared to an equivalent sequential program run on the CPU, the open source tools were approximately 5 times slower than the sequential algorithm, and the proprietary CUDA was  approximately 2 times as fast as the sequential algorithm.
 
-## Motivation
-Block chains are an emerging technology with possible applications in areas of distributed computing. However, it is not hard to imagine a block chain which grows sufficiently quickly such that a machine which is only connected periodically, could not self validate all the blocks in a reasonable time frame with a sequential algorithm. However, the validation of blocks on a proposed block chain is a parallelizable computation.
+## SHA256 on GPU
 
-While the Bitcoin Blockchain only adds a block approximately every 10 minutes, it provides a good testing ground for a proof of concept because it is well known, easy to get the block data, and uses a SHA256 hash as its validation algorithm, which is likely a similar operation to block chains of the future.
-
-We also decided to use this as a testing ground to compare CUDA and Vulkan, as validating block chains should ideally be able to work on as many GPU's as possible.
+SHA256 algorithm itself is primarily a sequential algorithm. However, for a variety of applications being able to hash many items in a parallel fashion can be quite beneficial. As an example, we specifically looked at validating the bitcoin blockchain as a benchmark. We compared the Vulkan/Rust API with a CUDA/C implementation.
 
 Read the [Full Report](docs/bitcoin_gpu.pdf).
 
-## The Vulkan-based Stack
+### WebGPU, Vulkan, and Rust-GPU
 
-The Vulkan kernel (shader) is written using [rust-gpu](https://github.com/EmbarkStudios/rust-gpu). [wgpu-rs](https://github.com/gfx-rs/wgpu-rs) is used for the Rust bindings to `WebGPU`. 
+We implemented the SHA256 algorithm in Rust and compiled it to SPIR-V using using [rust-gpu](https://github.com/EmbarkStudios/rust-gpu). The shader was then loaded to a Vulkan backend using [wgpu-rs](https://github.com/gfx-rs/wgpu-rs) with its Rust bindings to `WebGPU`. 
+
+To see more details, visit the [vulkan](vulkan/) directory.
 
 # Compile the code
 
