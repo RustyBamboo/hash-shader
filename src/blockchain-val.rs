@@ -60,13 +60,13 @@ fn sha<'a>(words: Vec<String>) -> (Box<[u32]>, Duration) {
     let shader = wgpu::include_spirv!(env!("kernel.spv"));
 
     let args = runner::ParamsBuilder::new()
-        .param(Some(&text_gpu))
-        .param(Some(&hash_gpu))
-        .param(Some(&size_gpu))
+        .param(Some(&text_gpu), true)
+        .param(Some(&hash_gpu), false)
+        .param(Some(&size_gpu), true)
         .build(Some(0));
 
     let start_1 = Instant::now();
-    let compute = device.compile("main_cs", &shader, &args.0).unwrap();
+    let compute = device.compile("main_cs", shader, &args.0).unwrap();
 
     device.call(compute, (count as u32, 1, 1), &args.1);
 

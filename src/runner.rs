@@ -22,8 +22,8 @@ pub struct GPUData<T: ?Sized> {
 
 impl Device {
     pub fn new(device_index: usize) -> Self {
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-        let mut adapter = instance.enumerate_adapters(wgpu::BackendBit::PRIMARY);
+        let instance = wgpu::Instance::default();
+        let mut adapter = instance.enumerate_adapters(wgpu::Backends::PRIMARY);
         let adapter = adapter.nth(device_index).unwrap();
         let (device, queue) = block_on(adapter.request_device(
             &wgpu::DeviceDescriptor {
@@ -52,17 +52,17 @@ impl Device {
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Staging Buffer"),
                 contents: &bytes,
-                usage: wgpu::BufferUsage::MAP_READ
-                    | wgpu::BufferUsage::COPY_DST
-                    | wgpu::BufferUsage::COPY_SRC,
+                usage: wgpu::BufferUsages::MAP_READ
+                    | wgpu::BufferUsages::COPY_DST
+                    | wgpu::BufferUsages::COPY_SRC,
             });
 
         let storage_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: bytes.len() as u64,
-            usage: wgpu::BufferUsage::STORAGE
-                | wgpu::BufferUsage::COPY_DST
-                | wgpu::BufferUsage::COPY_SRC,
+            usage: wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 
@@ -92,12 +92,14 @@ impl Device {
         self.queue.submit(Some(encoder.finish()));
 
         let buffer_slice = gpu.staging_buffer.slice(0..);
-        let buffer_future = buffer_slice.map_async(wgpu::MapMode::Read);
+        let (sender, receiver) = flume::bounded(1);
+        buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
+        // let buffer_future = buffer_slice.map_async(wgpu::MapMode::Read);
 
         self.device.poll(wgpu::Maintain::Wait);
 
         // Gets contents of buffer
-        if let Ok(()) = buffer_future.await {
+        if let Ok(Ok(())) = receiver.recv_async().await {
             let data = buffer_slice.get_mapped_range();
             let result = data
                 .chunks_exact(std::mem::size_of::<T>())
@@ -113,7 +115,7 @@ impl Device {
     pub fn compile(
         &self,
         entry: &str,
-        shader: &wgpu::ShaderModuleDescriptor,
+        shader: wgpu::ShaderModuleDescriptor,
         params: &GPUSetGroupLayout,
     ) -> Result<GPUCompute, ()> {
         let mut bind_group_layouts: HashMap<u32, wgpu::BindGroupLayout> = HashMap::new();
@@ -199,7 +201,7 @@ impl Device {
         // }
         {
             let mut cpass =
-                encoder.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None });
+                encoder.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
             cpass.set_pipeline(&gpu_compute.compute_pipeline);
 
             for (set_num, _bind_group) in gpu_compute.bind_group_layouts {
@@ -207,7 +209,7 @@ impl Device {
                 // let offsets : Vec<u32>= (0..args.len()-1).map(|_| 0).collect();
                 cpass.set_bind_group(set_num, &bind_groups[set_num as usize], &[]);
             }
-            cpass.dispatch(workspace.0, workspace.1, workspace.2);
+            cpass.dispatch_workgroups(workspace.0, workspace.1, workspace.2);
         }
         self.queue.submit(Some(encoder.finish()));
     }
@@ -228,7 +230,7 @@ pub struct GPUSetGroupLayout {
 /// This returns a `GPUSetGroupLayout` which is a HashMap with a key for a set,
 /// which contains a HashMap of Layout index and BindGroupLayoutEntry
 /// ```
-///     let args = alkomp::ParamsBuilder::new()
+///     let args = ParamsBuilder::new()
 ///         .param::<&[i32]>(None)
 ///         .param::<f32>(None)
 ///         .build(Some(0));
@@ -248,7 +250,7 @@ impl<'a> ParamsBuilder<'a> {
         }
     }
 
-    pub fn param<T: Sized>(mut self, gpu_data: Option<&'a GPUData<[T]>>) -> Self {
+    pub fn param<T: Sized>(mut self, gpu_data: Option<&'a GPUData<[T]>>, read_only: bool) -> Self {
         let new_binding_layout_idx = self.binding_layouts.len() as u32;
         // println!("{}", String::from(core::any::type_name::<T>()));
         // println!("{}",)
@@ -258,9 +260,9 @@ impl<'a> ParamsBuilder<'a> {
             (
                 wgpu::BindGroupLayoutEntry {
                     binding: new_binding_layout_idx,
-                    visibility: wgpu::ShaderStage::COMPUTE,
+                    visibility: wgpu::ShaderStages::COMPUTE,
                     ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        ty: wgpu::BufferBindingType::Storage { read_only: read_only },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },

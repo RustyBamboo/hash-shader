@@ -1,7 +1,11 @@
-use alkomp;
+mod runner;
 
 use std::env;
 
+/// Prepare the text data for GPU by padding the bits to multiples of 512
+/// - Append 1 as a delimiter
+/// - Append 0s
+/// - The last 64 bits denote the size of original message
 fn prepare_for_gpu(word: String) -> (Vec<u32>, u32) {
     let mut init: Vec<u8> = word.into_bytes();
 
@@ -33,40 +37,38 @@ fn prepare_for_gpu(word: String) -> (Vec<u32>, u32) {
 }
 
 fn main() {
-    let words: Vec<String> = vec![
-        "abc".to_string(),
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad12093123".to_string(),
-        "abc".to_string(),
-    ];
+    let words: Vec<String> = env::args().skip(1).collect();
     let count = words.len();
+    if count == 0 {
+        println!("Input a list of strings to hash");
+        return;
+    }
 
+    // A Vec of bit strings, and a vec of "number of iterations"
     let (texts, sizes): (Vec<Vec<u32>>, Vec<u32>) =
         words.into_iter().map(|x| prepare_for_gpu(x)).unzip();
 
     let texts: Vec<u32> = texts.into_iter().flatten().collect();
-    println!("{:?}", texts);
-
-    println!("{:?}", sizes);
 
     let hash = vec![0u32; count * 8];
 
     // Check number of bits
     assert_eq!(hash.len() * core::mem::size_of::<u32>() * 8, 8 * 32 * count);
 
-    let mut device = alkomp::Device::new(0);
+    let mut device = runner::Device::new(0);
     let text_gpu = device.to_device(texts.as_slice());
     let hash_gpu = device.to_device(hash.as_slice());
     let size_gpu = device.to_device(sizes.as_slice());
 
     let shader = wgpu::include_spirv!(env!("kernel.spv"));
 
-    let args = alkomp::ParamsBuilder::new()
-        .param(Some(&text_gpu))
-        .param(Some(&hash_gpu))
-        .param(Some(&size_gpu))
+    let args = runner::ParamsBuilder::new()
+        .param(Some(&text_gpu), true)
+        .param(Some(&hash_gpu), false)
+        .param(Some(&size_gpu), true)
         .build(Some(0));
 
-    let compute = device.compile("main_cs", &shader, &args.0).unwrap();
+    let compute = device.compile("main_cs", shader, &args.0).unwrap();
 
     device.call(compute, (count as u32, 1, 1), &args.1);
 
@@ -80,16 +82,7 @@ fn main() {
         .map(std::str::from_utf8)
         .collect::<Result<Vec<&str>, _>>()
         .unwrap();
-    assert_eq!(
-        chunks[0],
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-    );
-    assert_eq!(
-        chunks[1],
-        "1c4b99f23a70c71a182da472f4e06406e5e33d0c7cefe34d431f2a3a5900aa90"
-    );
-    assert_eq!(
-        chunks[2],
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-    );
+    for c in chunks {
+        println!("{}", c);
+    }
 }

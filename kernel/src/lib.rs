@@ -1,15 +1,6 @@
-#![allow(non_snake_case)]
-#![cfg_attr(
-    target_arch = "spirv",
-    no_std,
-    feature(register_attr),
-    register_attr(spirv)
-)]
+#![cfg_attr(target_arch = "spirv", no_std)]
 
-#[cfg(not(target_arch = "spirv"))]
-#[macro_use]
-pub extern crate spirv_std_macros;
-
+use spirv_std::{glam, spirv};
 use glam::UVec3;
 
 // Rotation right: u32.rotate_right(n: u32)

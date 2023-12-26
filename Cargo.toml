@@ -14,13 +14,18 @@ use-installed-tools = ["spirv-builder/use-installed-tools"]
 use-compiled-tools = ["spirv-builder/use-compiled-tools"]
 
 [dependencies]
-wgpu = { git = "https://github.com/gfx-rs/wgpu-rs", rev = "1de388afacee" }
+wgpu = { version="0.18.0", features=["spirv"] }
 futures = "*"
 hex = "*"
 csv = "*"
 bytemuck = "*"
-
-
+flume = "*"
 
 [build-dependencies]
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "4395b841141", default-features = false }
+spirv-builder = "0.9"
+
+[profile.release.build-override]
+opt-level = 3
+codegen-units = 16
+[profile.dev.build-override]
+opt-level = 3
