@@ -6,7 +6,6 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-
 use clap::Parser;
 
 use crate::helpers::prepare_for_gpu_u8;
@@ -22,6 +21,14 @@ struct Args {
 
     /// files to hash, or checksum files (if check)
     files: Vec<String>,
+
+    /// id of compute device
+    #[arg(short, long, default_value_t = 0)]
+    device: usize,
+
+    /// verbose mode
+    #[arg(short, long, default_value_t = false)]
+    verbose: bool,
 }
 
 struct HashAndFile {
@@ -69,9 +76,7 @@ fn main() {
         .map(|f| fs::read(&f).expect("Should have been able to read the file"))
         .collect();
 
-
     let count = files.len();
-
 
     // A Vec of bit strings, and a vec of "number of iterations"
     let (texts, sizes): (Vec<Vec<u32>>, Vec<u32>) =
@@ -92,7 +97,7 @@ fn main() {
     // Check number of bits
     assert_eq!(hash.len() * core::mem::size_of::<u32>() * 8, 8 * 32 * count);
 
-    let mut device = runner::Device::new(0);
+    let mut device = runner::Device::new(args.device);
     let text_gpu = device.to_device(texts.as_slice());
     let hash_gpu = device.to_device(hash.as_slice());
     let size_gpu = device.to_device(sizes.as_slice());
@@ -135,11 +140,28 @@ fn main() {
             println!("{}: {}", f, if status { "OK" } else { "FAILURE" });
         }
         if count_bad > 0 {
-            println!("sha256_rgpu: WARNING: {} computed checksum did NOT match", count_bad);
+            println!(
+                "sha256_rgpu: WARNING: {} computed checksum did NOT match",
+                count_bad
+            );
         }
     } else {
         for (f, c) in files.iter().zip(chunks.iter()) {
             println!("{}  {}", c, f);
         }
+    }
+
+    if args.verbose {
+        let d_info = &device.info.as_ref().unwrap().info;
+        let d_name = &d_info.name;
+        let d_type = &d_info.device_type;
+        let d_driver = &d_info.driver;
+        let d_driver_info = &d_info.driver_info;
+        let d_backend = &d_info.backend;
+
+        println!(
+            "{}\n  Type: {:?}\n  Driver: {} ({})\n  Backend: {:?}",
+            d_name, d_type, d_driver, d_driver_info, d_backend
+        );
     }
 }
