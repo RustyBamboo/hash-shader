@@ -309,7 +309,7 @@ fn test_hash_fn() {
 }
 
 #[allow(unused_attributes)]
-#[spirv(compute(threads(1)))]
+#[spirv(compute(threads(64)))]
 pub fn main_cs(
     #[spirv(global_invocation_id)] gid: UVec3,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] text: &[u32],

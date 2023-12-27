@@ -1,12 +1,8 @@
 [package]
-name = "vulkan"
-version = "0.1.0"
+name = "rvk_sha256"
+version = "0.2.0"
 authors = ["RustyBamboo <d@volya.xyz>"]
 edition = "2018"
-
-[[bin]]
-name = "blockchain-val"
-path = "src/blockchain-val.rs"
 
 [features]
 default = ["use-compiled-tools"]
@@ -15,14 +11,16 @@ use-compiled-tools = ["spirv-builder/use-compiled-tools"]
 
 [dependencies]
 wgpu = { version="0.18.0", features=["spirv"] }
-futures = "*"
-hex = "*"
-csv = "*"
-bytemuck = "*"
-flume = "*"
+futures = "0.3.30"
+bytemuck = "1.14.0"
+flume = "0.11.0"
 
 [build-dependencies]
 spirv-builder = "0.9"
+
+[dev-dependencies]
+hex = "*"
+csv = "*"
 
 [profile.release.build-override]
 opt-level = 3

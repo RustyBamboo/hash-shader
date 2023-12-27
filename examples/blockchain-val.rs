@@ -1,6 +1,7 @@
+#[path="../src/runner.rs"]
 mod runner;
 
-use std::env;
+use std::{env, path};
 use std::time::{Duration, Instant};
 
 /// Prepare the text data for GPU by padding the bits to multiples of 512
