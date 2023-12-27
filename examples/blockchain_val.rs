@@ -1,49 +1,20 @@
-#[path="../src/runner.rs"]
+#[path = "../src/runner.rs"]
 mod runner;
 
-use std::{env, path};
+#[path = "../src/helpers.rs"]
+mod helpers;
+
+use std::env;
 use std::time::{Duration, Instant};
 
-/// Prepare the text data for GPU by padding the bits to multiples of 512
-/// - Append 1 as a delimiter
-/// - Append 0s
-/// - The last 64 bits denote the size of original message
-fn prepare_for_gpu(word: String) -> (Vec<u32>, u32) {
-    let mut init: Vec<u8> = hex::decode(word).expect("Input was not hex");
-
-    let msg_size = (init.len() * 8) as u64; // in bits
-
-    let desired_size = (msg_size / 512 + 1) * 512;
-
-    // Add a 1 as a delimiter
-    init.push(0x80 as u8);
-    let size: usize = ((desired_size - 64) as u32 / 8u32 - init.len() as u32) as usize;
-
-    // Pad with zeros
-    let remaining = vec![0u8; size];
-    init.extend(&remaining);
-
-    // Make the last 64 bits be the size
-    let size = (msg_size).to_be_bytes();
-    init.extend(&size);
-
-    let mut text = Vec::new();
-
-    use std::convert::TryInto;
-    for i in 0..(desired_size / 32) as usize {
-        let val = u32::from_be_bytes(init[i * 4..(i + 1) * 4].try_into().unwrap());
-        text.push(val);
-    }
-
-    (text, (desired_size / 512) as u32)
-}
+use helpers::prepare_for_gpu_u8;
 
 fn sha<'a>(words: Vec<String>) -> (Box<[u32]>, Duration) {
     let count = words.len();
 
     // A Vec of bit strings, and a vec of "number of iterations"
     let (texts, sizes): (Vec<Vec<u32>>, Vec<u32>) =
-        words.into_iter().map(|x| prepare_for_gpu(x)).unzip();
+        words.into_iter().map(|x| prepare_for_gpu_u8(hex::decode(x).expect("Input was not hex"))).unzip();
 
     let texts: Vec<u32> = texts.into_iter().flatten().collect();
 
@@ -79,7 +50,9 @@ fn sha<'a>(words: Vec<String>) -> (Box<[u32]>, Duration) {
 fn main() {
     let paths: Vec<String> = env::args().skip(1).collect();
     if paths.len() == 0 {
-        println!("Input path to CSV file containing blockchain data");
+        println!("Input path to CSV file containing blockchain data: [block header],[block hash]
+        \nThe following will create a CSV file with this information from the real bitcoin blockchain:
+        \n\tpython3 examples/prepare_blockchain.py\n");
         return;
     }
     let max_blocks: i32;

@@ -1,55 +1,92 @@
+mod helpers;
 mod runner;
 
-use std::env;
+use std::{
+    env, fs,
+    io::{BufRead, BufReader},
+};
 
-/// Prepare the text data for GPU by padding the bits to multiples of 512
-/// - Append 1 as a delimiter
-/// - Append 0s
-/// - The last 64 bits denote the size of original message
-fn prepare_for_gpu(word: String) -> (Vec<u32>, u32) {
-    let mut init: Vec<u8> = word.into_bytes();
 
-    let msg_size = (init.len() * 8) as u64; // in bits
+use clap::Parser;
 
-    let desired_size = (msg_size / 512 + 1) * 512;
+use crate::helpers::prepare_for_gpu_u8;
 
-    // Add a 1 as a delimiter
-    init.push(0x80 as u8);
-    let size: usize = ((desired_size - 64) as u32 / 8u32 - init.len() as u32) as usize;
+/// Print or check SHA256 (256-bit) checksums.
+/// Computing SHA256 hash is performed on a Vulkan backend.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// read checksums from file and check them
+    #[arg(short, long)]
+    check: bool,
 
-    // Pad with zeros
-    let remaining = vec![0u8; size];
-    init.extend(&remaining);
+    /// files to hash, or checksum files (if check)
+    files: Vec<String>,
+}
 
-    // Make the last 64 bits be the size
-    let size = (msg_size).to_be_bytes();
-    init.extend(&size);
+struct HashAndFile {
+    hash: String,
+    file: String,
+}
 
-    let mut text = Vec::new();
+fn lines_from_file(filename: &str) -> Vec<HashAndFile> {
+    let file = fs::File::open(filename).expect("no such file");
+    let buf = BufReader::new(file);
+    let lines = buf
+        .lines()
+        .map(|l| l.expect("Could not parse line"))
+        .map(|l| {
+            let parts: Vec<&str> = l.split("  ").collect();
+            if parts.len() != 2 {
+                panic!("Line does not contain exactly two parts");
+            }
+            HashAndFile {
+                hash: parts[0].to_string(),
+                file: parts[1].to_string(),
+            }
+        })
+        .collect();
 
-    use std::convert::TryInto;
-    for i in 0..(desired_size / 32) as usize {
-        let val = u32::from_be_bytes(init[i * 4..(i + 1) * 4].try_into().unwrap());
-        text.push(val);
-    }
-
-    (text, (desired_size / 512) as u32)
+    lines
 }
 
 fn main() {
-    let words: Vec<String> = env::args().skip(1).collect();
-    let count = words.len();
-    if count == 0 {
-        println!("Input a list of strings to hash");
-        return;
-    }
+    let args = Args::parse();
+    let (files, hashes) = if args.check {
+        let hf: Vec<HashAndFile> = args
+            .files
+            .iter()
+            .map(|f| lines_from_file(f))
+            .flatten()
+            .collect();
+        let (files, hashes): (Vec<_>, Vec<_>) = hf.into_iter().map(|x| (x.file, x.hash)).unzip();
+        (files, Some(hashes))
+    } else {
+        (args.files, None)
+    };
+    let contents: Vec<Vec<u8>> = files
+        .iter()
+        .map(|f| fs::read(&f).expect("Should have been able to read the file"))
+        .collect();
+
+
+    let count = files.len();
+
 
     // A Vec of bit strings, and a vec of "number of iterations"
     let (texts, sizes): (Vec<Vec<u32>>, Vec<u32>) =
-        words.into_iter().map(|x| prepare_for_gpu(x)).unzip();
+        contents.into_iter().map(|x| prepare_for_gpu_u8(x)).unzip();
 
+    for &s in &sizes {
+        if s > 10000 {
+            todo!("Sorry, the file is too large and will crash your GPU. This will change in the future by sending data in chunks to the GPU.")
+        }
+    }
+
+    // Flatten the data to send to GPUs
     let texts: Vec<u32> = texts.into_iter().flatten().collect();
 
+    // Prepare buffer to store the results
     let hash = vec![0u32; count * 8];
 
     // Check number of bits
@@ -62,15 +99,15 @@ fn main() {
 
     let shader = wgpu::include_spirv!(env!("kernel.spv"));
 
-    let args = runner::ParamsBuilder::new()
+    let args_gpu = runner::ParamsBuilder::new()
         .param(Some(&text_gpu), true)
         .param(Some(&hash_gpu), false)
         .param(Some(&size_gpu), true)
         .build(Some(0));
 
-    let compute = device.compile("main_cs", shader, &args.0).unwrap();
+    let compute = device.compile("main_cs", shader, &args_gpu.0).unwrap();
 
-    device.call(compute, (count as u32, 1, 1), &args.1);
+    device.call(compute, (count as u32, 1, 1), &args_gpu.1);
 
     let hash_res = futures::executor::block_on(device.get(&hash_gpu)).unwrap();
     let hash_res = &hash_res[0..hash.len()];
@@ -82,7 +119,27 @@ fn main() {
         .map(std::str::from_utf8)
         .collect::<Result<Vec<&str>, _>>()
         .unwrap();
-    for c in chunks {
-        println!("{}", c);
+    if let Some(hashes) = hashes {
+        let mut count_bad = 0;
+        for i in 0..files.len() {
+            let f = &files[i];
+            let c = chunks[i];
+            let h: &str = hashes[i].as_ref();
+
+            let status = c == h;
+
+            if !status {
+                count_bad += 1;
+            }
+
+            println!("{}: {}", f, if status { "OK" } else { "FAILURE" });
+        }
+        if count_bad > 0 {
+            println!("sha256_rgpu: WARNING: {} computed checksum did NOT match", count_bad);
+        }
+    } else {
+        for (f, c) in files.iter().zip(chunks.iter()) {
+            println!("{}  {}", c, f);
+        }
     }
 }

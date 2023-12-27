@@ -1,5 +1,5 @@
 [package]
-name = "rvk_sha256"
+name = "sha256_rgpu"
 version = "0.2.0"
 authors = ["RustyBamboo <d@volya.xyz>"]
 edition = "2018"
@@ -14,6 +14,8 @@ wgpu = { version="0.18.0", features=["spirv"] }
 futures = "0.3.30"
 bytemuck = "1.14.0"
 flume = "0.11.0"
+rand = "0.8.5"
+clap = { version = "4.4.11", features = ["derive"] }
 
 [build-dependencies]
 spirv-builder = "0.9"

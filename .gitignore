@@ -3,10 +3,8 @@
 *.swp
 *.swo
 
-c/build/*
-c/cpu_bitcoin
-c/cpu_test
-c/cuda_test
-c/cuda_bitcoin
-
 **/target
+
+**.csv
+
+bitcoin
