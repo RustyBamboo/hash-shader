@@ -57,3 +57,10 @@ cd kernel
 cargo test --release
 ```
 
+### C + CUDA
+
+The [CUDA branch](https://github.com/RustyBamboo/hash-shader/tree/cuda) contains an implementation of SHA256 using the CUDA API. 
+
+### License
+
+Please see [LICENSE](./LICENSE)
