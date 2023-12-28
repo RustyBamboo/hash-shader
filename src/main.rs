@@ -10,6 +10,8 @@ use clap::Parser;
 
 use crate::helpers::prepare_for_gpu_u8;
 
+const KERNEL: &[u8] = include_bytes!(env!("kernel.spv"));
+
 /// Print or check SHA256 (256-bit) checksums.
 /// Computing SHA256 hash is performed on a GPU backend.
 #[derive(Parser, Debug)]
@@ -107,7 +109,10 @@ fn main() {
     let hash_gpu = device.to_device(hash.as_slice());
     let size_gpu = device.to_device(sizes.as_slice());
 
-    let shader = wgpu::include_spirv!(env!("kernel.spv"));
+    let shader = wgpu::ShaderModuleDescriptor {
+        label: Some("Shader"),
+        source: wgpu::util::make_spirv(KERNEL),
+    };
 
     let args_gpu = runner::ParamsBuilder::new()
         .param(Some(&text_gpu), true)
