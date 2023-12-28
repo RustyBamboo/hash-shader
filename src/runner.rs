@@ -24,7 +24,7 @@ impl Device {
     pub fn new(device_index: usize) -> Self {
         let instance = wgpu::Instance::default();
         let mut adapter = instance.enumerate_adapters(wgpu::Backends::PRIMARY);
-        let adapter = adapter.nth(device_index).unwrap();
+        let adapter = adapter.nth(device_index).expect("Device not found. Try using a different device.");
         let (device, queue) = block_on(adapter.request_device(
             &wgpu::DeviceDescriptor {
                 features: wgpu::Features::MAPPABLE_PRIMARY_BUFFERS,

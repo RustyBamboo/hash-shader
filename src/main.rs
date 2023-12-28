@@ -11,9 +11,9 @@ use clap::Parser;
 use crate::helpers::prepare_for_gpu_u8;
 
 /// Print or check SHA256 (256-bit) checksums.
-/// Computing SHA256 hash is performed on a Vulkan backend.
+/// Computing SHA256 hash is performed on a GPU backend.
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, arg_required_else_help(true), long_about = None, after_help = "Example: \n sha256_rgpu MYFILE > hash.sha256sum \n sha256_rgpu -c hash.sha256sum")]
 struct Args {
     /// read checksums from file and check them
     #[arg(short, long)]
@@ -36,6 +36,9 @@ struct HashAndFile {
     file: String,
 }
 
+///
+/// Read lines from a checksum file and extract hash value and file path
+///
 fn lines_from_file(filename: &str) -> Vec<HashAndFile> {
     let file = fs::File::open(filename).expect("no such file");
     let buf = BufReader::new(file);
@@ -59,6 +62,8 @@ fn lines_from_file(filename: &str) -> Vec<HashAndFile> {
 
 fn main() {
     let args = Args::parse();
+
+    // Read all files and obtain a list of hash values and corresponding file paths
     let (files, hashes) = if args.check {
         let hf: Vec<HashAndFile> = args
             .files
@@ -124,6 +129,7 @@ fn main() {
         .map(std::str::from_utf8)
         .collect::<Result<Vec<&str>, _>>()
         .unwrap();
+
     if let Some(hashes) = hashes {
         let mut count_bad = 0;
         for i in 0..files.len() {
