@@ -57,6 +57,33 @@ cd kernel
 cargo test --release
 ```
 
+### Code Layout
+
+```
+.
+├── build.rs
+├── Cargo.lock
+├── Cargo.toml
+├── examples
+│   ├── benckmark.rs
+│   ├── blockchain_val.rs
+│   └── prepare_blockchain.py
+├── gfx
+│   └── screenshot.png
+├── kernel <-- Rust code that is compiled to SPIR-V
+│   ├── Cargo.lock
+│   ├── Cargo.toml
+│   └── src
+│       └── lib.rs
+├── LICENSE
+├── README.md
+├── rust-toolchain
+├── src
+│   ├── helpers.rs
+│   ├── main.rs
+│   └── runner.rs
+```
+
 ### C + CUDA
 
 The [CUDA branch](https://github.com/RustyBamboo/hash-shader/tree/cuda) contains an implementation of SHA256 using the CUDA API. 
