@@ -2,11 +2,17 @@
 
 SHA256 Compute Shader (Kernel) Written in Rust. Aka a "hash-shader".
 
-This project contains four key goals:
+This project contains the following goals:
 - Write Rust code for computing SHA256 on GPUs using [rust-gpu](https://github.com/EmbarkStudios/rust-gpu)
 - Use [wgpu](https://github.com/gfx-rs/wgpu) for cross-platform GPU compute
-- Performance analysis
+- Reference implementation for writing compute kernels and WebGPU runners in Rust
 - `sha256_rgpu` command-line tool for assessing data integrity, similiar to `sha256sum`
+
+### On the web
+
+Try at [https://rustybamboo.github.io/hash-shader/](https://rustybamboo.github.io/hash-shader/)
+
+Note that you will need a browser that supports WebGPU. 
 
 ### Screenshot of sha256_rgpu
 

@@ -9,6 +9,9 @@
 <body>
   <h1>sha256_rgpu</h1>
   <p>Computes the SHA256 hash using WASM and WebGPU. <a href="https://github.com/RustyBamboo/hash-shader">GitHub</a></p>
+  <p>WebGPU is now available in latest Chromium / Google chrome on desktop behind an experimental flag. You can enable it at <b>chrome://flags/#enable-unsafe-webgpu</b> (on linux you also need to launch Chromium with <b>--enable-features=Vulkan</b>)</p>
+  <p><a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status">Read more about WebGPU implementation status</a> </p>
+  <hr>
   <textarea id="inputText" placeholder="Enter text here"></textarea>
   <!-- <input type="inputbox" id="inputText" placeholder="Enter text here" /> -->
   <input type="radio" id="stringType" name="dataType" value="string" checked>
