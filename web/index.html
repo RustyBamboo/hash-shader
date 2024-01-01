@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8" />
+  <title>sha256_rgpu</title>
+</head>
+
+<body>
+  <h1>sha256_rgpu</h1>
+  <p>Computes the SHA256 hash using WASM and WebGPU. <a href="https://github.com/RustyBamboo/hash-shader">GitHub</a></p>
+  <textarea id="inputText" placeholder="Enter text here"></textarea>
+  <!-- <input type="inputbox" id="inputText" placeholder="Enter text here" /> -->
+  <input type="radio" id="stringType" name="dataType" value="string" checked>
+  <label for="stringType">String</label>
+  <input type="radio" id="byteStringType" name="dataType" value="byteString">
+  <label for="byteStringType">Hex</label><br>
+  <button id="submitBtn">Submit</button>
+  <div id="result"></div>
+
+  <script type="module">
+    import init, { hash } from "./pkg/sha256_rgpu.js";
+
+    async function performHash() {
+      const inputText = document.getElementById('inputText').value;
+      const isByteString = document.getElementById('byteStringType').checked;
+      let result;
+
+      if (isByteString) {
+        result = await hash(inputText, false);
+      } else {
+        result = await hash(inputText, true);
+      }
+
+      document.getElementById('result').innerText = 'Hash: ' + result;
+    }
+
+
+    init().then(() => {
+      document.getElementById('submitBtn').addEventListener('click', performHash);
+    });
+  </script>
+</body>
+
+</html>

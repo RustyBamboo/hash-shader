@@ -86,7 +86,17 @@ cargo test --release
 
 ### C + CUDA
 
-The [CUDA branch](https://github.com/RustyBamboo/hash-shader/tree/cuda) contains an implementation of SHA256 using the CUDA API. 
+The [CUDA branch](https://github.com/RustyBamboo/hash-shader/tree/cuda) contains an implementation of SHA256 using the CUDA API.
+
+### Web + wasm
+
+```
+cargo install web-pack
+```
+
+```
+RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web --out-dir=web/pkg
+```
 
 ### License
 

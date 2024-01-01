@@ -1,4 +1,6 @@
+#[cfg(not(target_arch = "wasm32"))]
 use futures::executor::block_on;
+
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use wgpu::util::DeviceExt;
@@ -7,6 +9,12 @@ pub struct DeviceInfo {
     pub info: wgpu::AdapterInfo,
 }
 
+// #[cfg(target_arch = "wasm32")]
+// pub struct Device {
+// pub device: wgpu::Device,
+// pub queue: wgpu::Queue,
+// }
+// #[cfg(not(target_arch = "wasm32"))]
 pub struct Device {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -21,10 +29,52 @@ pub struct GPUData<T: ?Sized> {
 }
 
 impl Device {
+    #[cfg(target_arch = "wasm32")]
+    pub async fn new() -> Self {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::all(),
+            ..Default::default()
+        });
+
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::default(),
+                compatible_surface: None,
+                force_fallback_adapter: true,
+            })
+            .await
+            .expect("No adapter?");
+
+        let supported_limits = adapter.limits();
+
+        let (device, queue) = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    features: wgpu::Features::default(),
+                    limits: supported_limits,
+                    label: None,
+                },
+                None,
+            )
+            .await
+            .expect("No devices?");
+
+        let info = adapter.get_info().clone();
+        let info = DeviceInfo { info };
+
+        Device {
+            device,
+            queue,
+            info: Some(info),
+        }
+    }
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn new(device_index: usize) -> Self {
         let instance = wgpu::Instance::default();
         let mut adapter = instance.enumerate_adapters(wgpu::Backends::PRIMARY);
-        let adapter = adapter.nth(device_index).expect("Device not found. Try using a different device.");
+        let adapter = adapter
+            .nth(device_index)
+            .expect("Device not found. Try using a different device.");
         let (device, queue) = block_on(adapter.request_device(
             &wgpu::DeviceDescriptor {
                 features: wgpu::Features::MAPPABLE_PRIMARY_BUFFERS,
@@ -47,31 +97,60 @@ impl Device {
     pub fn to_device<T: bytemuck::Pod>(&mut self, data: &[T]) -> GPUData<[T]> {
         let bytes = bytemuck::cast_slice(data);
 
-        let staging_buffer = self
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Staging Buffer"),
-                contents: &bytes,
-                usage: wgpu::BufferUsages::MAP_READ
+        let staging_buffer = if cfg!(not(target_arch = "wasm32")) {
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Staging Buffer"),
+                    contents: &bytes,
+                    usage: wgpu::BufferUsages::MAP_READ
+                        | wgpu::BufferUsages::COPY_DST
+                        | wgpu::BufferUsages::COPY_SRC,
+                })
+        } else {
+            self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: None,
+                size: bytes.len() as u64,
+                usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            })
+        };
+
+        let storage_buffer = if cfg!(not(target_arch = "wasm32")) {
+            self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: None,
+                size: bytes.len() as u64,
+                usage: wgpu::BufferUsages::STORAGE
                     | wgpu::BufferUsages::COPY_DST
                     | wgpu::BufferUsages::COPY_SRC,
-            });
+                mapped_at_creation: false,
+            })
+        } else {
+            // Preload the buffer with data if we are on web
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Storage Buffer"),
+                    contents: &bytes,
+                    usage: wgpu::BufferUsages::STORAGE
+                        | wgpu::BufferUsages::COPY_DST
+                        | wgpu::BufferUsages::COPY_SRC,
+                })
+        };
 
-        let storage_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: bytes.len() as u64,
-            usage: wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let mut encoder = self
+                .device
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            encoder.copy_buffer_to_buffer(
+                &staging_buffer,
+                0,
+                &storage_buffer,
+                0,
+                bytes.len() as u64,
+            );
 
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-        encoder.copy_buffer_to_buffer(&staging_buffer, 0, &storage_buffer, 0, bytes.len() as u64);
-
-        self.queue.submit(Some(encoder.finish()));
+            self.queue.submit(Some(encoder.finish()));
+        }
 
         GPUData {
             staging_buffer,
@@ -200,8 +279,10 @@ impl Device {
         );
         // }
         {
-            let mut cpass =
-                encoder.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
+            let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: None,
+                timestamp_writes: None,
+            });
             cpass.set_pipeline(&gpu_compute.compute_pipeline);
 
             for (set_num, _bind_group) in gpu_compute.bind_group_layouts {
@@ -262,7 +343,9 @@ impl<'a> ParamsBuilder<'a> {
                     binding: new_binding_layout_idx,
                     visibility: wgpu::ShaderStages::COMPUTE,
                     ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: read_only },
+                        ty: wgpu::BufferBindingType::Storage {
+                            read_only: read_only,
+                        },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
