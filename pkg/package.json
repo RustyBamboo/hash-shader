@@ -1,0 +1,17 @@
+{
+  "name": "sha256_rgpu",
+  "collaborators": [
+    "RustyBamboo <d@volya.xyz>"
+  ],
+  "version": "0.2.0",
+  "files": [
+    "sha256_rgpu_bg.wasm",
+    "sha256_rgpu.js",
+    "sha256_rgpu.d.ts"
+  ],
+  "module": "sha256_rgpu.js",
+  "types": "sha256_rgpu.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
